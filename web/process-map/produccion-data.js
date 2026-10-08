@@ -414,9 +414,7 @@ const productionData = {
     "prepared": "Proceso Mejora Continua",
     "reviewer": "Julian Cardona",
     "reviewDate": "06/10/2025",
-    "notes": [
-      "El diagrama rotula el inicio como «Solicitud de compra», mientras el alcance describe el inicio con una OP del área comercial. Se conservan los datos y queda pendiente confirmar esa etiqueta."
-    ]
+    "notes": []
   },
   "soporte": {
     "name": "Soporte técnico",
