@@ -492,3 +492,7 @@ Se eliminó el mínimo artificial de altura del iframe y la altura heredada del 
 ### 7 de octubre de 2026 · Auditoría completa de espacios en procesos
 
 Después de publicar el ajuste de altura se recorrieron los nueve procesos y 147 estados de interfaz, incluyendo todas las pestañas, todas las actividades y las tres caracterizaciones de Producción. Se verificaron recorte vertical, espacio final mayor de 2 px, desbordamiento horizontal y última tarjeta sin ocupar la fila completa cuando la cantidad es impar. Resultado: 0 hallazgos en Planeación, Mejora continua, Comercial, Desarrollo, Compras, Producción, Talento Humano, SG-SST y Financiera. No fueron necesarios cambios adicionales ni una nueva publicación.
+
+### 7 de octubre de 2026 · Actualización del logo SIGMYP
+
+Se reemplazó `web/logo-sigmyp.png` por el archivo PNG RGBA de 1448 × 1086 entregado por la propietaria. El archivo conservado coincide byte por byte con el original. Se actualizó el texto alternativo al lema «Sistema integrado de gestión para micro y pequeñas empresas» y el build añade una versión por hash al logo. La revisión local confirmó su proporción en la cabecera autenticada; la prueba de dominio aprobó.

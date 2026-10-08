@@ -13,7 +13,7 @@ await cp('web/process-map', `${outputDir}/procesos`, { recursive: true });
 // Keep existing browser caches from mixing old scripts with a new page.
 for (const page of ['index.html', 'app.html']) {
   let html = await readFile(`${outputDir}/${page}`, 'utf8');
-  for (const asset of ['landing.js', 'app.js', 'style.css']) {
+  for (const asset of ['landing.js', 'app.js', 'style.css', 'logo-sigmyp.png']) {
     const hash = createHash('sha256').update(await readFile(`${outputDir}/${asset}`)).digest('hex').slice(0, 16);
     html = html.replaceAll(`"/${asset}"`, `"/${asset}?v=${hash}"`);
   }
