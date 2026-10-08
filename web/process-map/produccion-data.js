@@ -565,9 +565,6 @@ const productionData = {
     "prepared": "Janet Quintero",
     "reviewer": "Julian Cardona",
     "reviewDate": "10/10/2025",
-    "notes": [
-      "El archivo se llama CT-C-PR-007, pero su encabezado indica CT-C-PR-001. El campo rotulado «Páginas» contiene «10/10/2025». Se conserva como fecha registrada, pendiente de confirmación.",
-      "Esta caracterización presenta entradas, actividades y resultados; no separa proveedores ni salidas. No incluye secciones de alcance, riesgos o recursos."
-    ]
+    "notes": []
   }
 };
