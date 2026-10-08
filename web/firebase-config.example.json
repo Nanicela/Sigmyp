@@ -1,0 +1,10 @@
+{
+  "useEmulators": true,
+  "region": "us-central1",
+  "firebase": {
+    "apiKey": "demo-key-not-a-real-credential",
+    "authDomain": "demo-facturacion.firebaseapp.com",
+    "projectId": "demo-facturacion",
+    "appId": "1:123456789:web:demo"
+  }
+}

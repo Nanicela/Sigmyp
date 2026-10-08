@@ -1,0 +1,7 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // XML/PDF y políticas de conservación se incorporan en una etapa posterior.
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}

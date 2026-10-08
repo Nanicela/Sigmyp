@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sigmyp · Sistema Integrado de Gestión para Micro y Pequeñas Empresas</title>
+<link rel="stylesheet" href="/style.css?v=map-only-2">
+<script type="module" src="/app.js?v=map-only-1">
+</script>
+</head>
+<body data-screen="nuevo" class="app-page auth-pending map-only-mode">
+<aside class="rail" id="sidebar">
+<button id="sidebar-toggle" type="button" class="sidebar-toggle" aria-controls="main-nav" aria-expanded="true" aria-label="Minimizar menú" title="Minimizar menú">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+<rect x="3" y="4" width="18" height="16" rx="2"/>
+<path d="M9 4v16m7-12-3 4 3 4"/>
+</svg>
+</button>
+<a class="brand sidebar-sigmyp-brand" href="/app.html" aria-label="SIGMYP, espacio de trabajo"><span class="sigmyp-logo sigmyp-logo-sidebar"><img src="/logo-sigmyp.png" alt="SIGMYP by DyD"></span></a>
+<div class="rail-label">PLATAFORMA SIGMYP</div>
+<nav aria-label="Menú principal" id="main-nav">
+<button type="button" class="nav-link" data-route="companias">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+<path d="M3 21h18M5 21V3h14v18M9 7h6M9 11h6M9 15h6"/>
+</svg>
+<span>Compañías</span>
+</button>
+<div id="company-subnav" hidden>
+<p class="nav-group" id="nav-company-name">
+</p>
+<button type="button" class="nav-link" data-route="procesos">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<rect x="3" y="4" width="7" height="6" rx="1.5"/>
+<rect x="14" y="4" width="7" height="6" rx="1.5"/>
+<rect x="8.5" y="15" width="7" height="6" rx="1.5"/>
+<path d="M6.5 10v2.5H12M17.5 10v2.5H12M12 12.5V15"/>
+</svg>
+<span>Mapa de procesos</span>
+</button>
+</div>
+<button type="button" class="nav-link" data-route="registrar" disabled>
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+<path d="M3 21h18M5 21V5h10v16M15 10h4v11M8 9h4M8 13h4M8 17h4"/>
+</svg>
+<span>Registrar empresa</span>
+</button>
+</nav>
+<div class="rail-bottom">Gestión empresarial<br>
+<strong>Sigmyp</strong>
+</div>
+</aside>
+<main>
+<header>
+<a class="header-sigmyp-brand" href="/app.html" aria-label="Ir al inicio de SIGMYP">
+<span class="sigmyp-logo sigmyp-logo-header"><img src="/logo-sigmyp.png" alt="SIGMYP by DyD · Sistema de gestión integrado para micro y pequeñas empresas"></span>
+</a>
+<div class="session">
+<span id="mode" hidden></span>
+<div id="account-actions" class="account-actions" hidden>
+<button id="account-trigger" class="account-icon-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="account-menu" title="Abrir menú de usuario">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+<span id="account-initials" aria-hidden="true"></span>
+<span class="sr-only">Abrir menú de usuario</span>
+</button>
+<div id="account-menu" class="account-menu" role="menu" hidden>
+<div class="account-summary">
+<strong id="account-name"></strong>
+<span id="account-email"></span>
+<small id="account-role"></small>
+</div>
+<button id="account-profile" type="button" role="menuitem"><span class="account-menu-icon" aria-hidden="true">●</span><span><strong>Mi perfil</strong><small>Ver mi información personal</small></span></button>
+<button id="account-company" type="button" role="menuitem" hidden><span class="account-menu-icon" aria-hidden="true">▦</span><span><strong>Datos de la empresa</strong><small>Consultar la compañía activa</small></span></button>
+<button id="account-users" type="button" role="menuitem" hidden><span class="account-menu-icon" aria-hidden="true">⚙</span><span><strong>Usuarios y permisos</strong><small>Configurar accesos y roles</small></span></button>
+<button id="logout" type="button" role="menuitem" hidden><span class="account-menu-icon" aria-hidden="true">↪</span><span><strong>Cerrar sesión</strong><small>Salir de SIGMYP</small></span></button>
+</div>
+</div>
+</div>
+</header>
+<div class="intro">
+<div>
+<h1 id="view-title">Tu gestión, en un solo lugar.</h1>
+<p id="view-description">Administra compañías, procesos y facturación desde un espacio conectado.</p>
+</div>
+<button id="back-to-processes" type="button" class="back-to-processes" hidden>← Volver al mapa de procesos</button>
+</div>
+<p id="message" role="status" aria-live="polite"></p>
+<p id="auth-loading" role="status">Recuperando tu sesión…</p>
+<section id="login-panel" class="card login" hidden>
+<div class="eyebrow">ACCESO AL SISTEMA INTEGRADO</div>
+<h2>Inicia sesión</h2>
+<button id="google-login" type="button" hidden>Continuar con Google</button>
+<p id="spark-help" class="hint" hidden>En esta etapa se admiten hasta tres conceptos por documento.</p>
+<form id="login">
+<label>Correo electrónico<input type="email" name="email" required autocomplete="username">
+</label>
+<label>Contraseña<input type="password" name="password" required autocomplete="current-password">
+</label>
+<button type="submit">Entrar</button>
+</form>
+<p id="demo-help" class="hint" hidden>Entorno de prueba con datos ficticios.</p>
+</section>
+<div id="workspace" hidden>
+<button id="open-audit" type="button" class="quiet" hidden>Historial de cambios de la empresa</button>
+<p id="current-role" class="badge" hidden>
+</p>
+<div id="active-company-banner" class="active-company-banner" hidden>
+<div>
+<span class="eyebrow">COMPAÑÍA ACTIVA</span>
+<strong id="active-company-name">
+</strong>
+</div>
+<button type="button" class="quiet" data-route="companias">Cambiar compañía →</button>
+</div>
+<section class="view process-map-view" data-view="procesos">
+<iframe id="process-map-frame" data-src="/procesos/index.html" title="Mapa de procesos de DyD" loading="lazy" scrolling="no"></iframe>
+</section>
+<section class="card view" data-view="acceso">
+<h2>Acceso a tu compañía</h2>
+<p id="company-access-status" role="status">Estamos comprobando tu acceso…</p>
+</section>
+<section class="card view" data-view="companias">
+<div class="section-head">
+<div>
+<div class="eyebrow">TU SISTEMA INTEGRADO</div>
+<h2>¿Con qué compañía vas a trabajar?</h2>
+<p class="hint">Selecciona una compañía para acceder a los módulos disponibles para ella.</p>
+</div>
+</div>
+<div class="company-bar">
+<label>Selecciona una compañía<select id="company">
+<option value="">Selecciona una compañía</option>
+</select>
+</label>
+<span id="identity" class="hint">
+</span>
+</div>
+<button id="create-company-table" type="button">+ Crear empresa</button>
+<div id="company-cards">
+</div>
+<p id="companies-empty" class="hint" hidden>No tienes compañías asignadas. Solicita acceso a la administradora.</p>
+</section>
+<section class="card view" data-view="productos">
+<div class="section-head">
+<h2>Catálogo de productos y servicios</h2>
+<button id="new-product" type="button">+ Crear producto o servicio</button>
+</div>
+<p class="hint">Precios en COP antes de IVA. Este catálogo no controla existencias de inventario. Desactiva los artículos que ya no uses; los documentos guardados conservan sus valores.</p>
+<label>Buscar por código o nombre<input id="product-search" type="search" placeholder="Buscar en el catálogo">
+</label>
+<p id="product-status" role="status">
+</p>
+<div id="product-list" class="customer-directory">
+</div>
+<form id="product-form" hidden>
+<div class="two">
+<label>Tipo<select name="type">
+<option value="PRODUCT">Producto</option>
+<option value="SERVICE">Servicio</option>
+</select>
+</label>
+<label>Código único<input name="code" required maxlength="30" pattern="[A-Za-z0-9_-]{1,30}">
+</label>
+<label>Nombre<input name="name" required maxlength="150">
+</label>
+<label>Precio antes de IVA<input name="price" required inputmode="decimal" placeholder="100000.00" pattern="[0-9]+([.][0-9]{1,2})?">
+</label>
+<label>IVA<select name="rate">
+<option value="19">19 %</option>
+<option value="5">5 %</option>
+</select>
+</label>
+<label>Estado<select name="active">
+<option value="true">Activo</option>
+<option value="false">Inactivo</option>
+</select>
+</label>
+</div>
+<label>Descripción adicional<textarea name="description" maxlength="500" rows="2">
+</textarea>
+</label>
+<button type="submit">Guardar</button> <button type="button" id="cancel-product" class="quiet">Cancelar</button>
+</form>
+</section>
+<section class="card view" data-view="usuarios">
+<h2>Usuarios y permisos</h2>
+<p class="hint">Cada usuario pertenece a una sola compañía. El Superadministrador tiene acceso global y puede visualizar todas las compañías; este permiso protegido no se asigna desde el selector común. Para trasladar un usuario, retira primero su acceso anterior. Usa el correo exacto con el que la persona inicia sesión. Para cambiar un rol, usa Editar rol. No se envían invitaciones por correo.</p>
+<details id="registered-users" hidden>
+<summary>Registro de usuarios de la plataforma (100 más recientes)</summary>
+<div id="registered-users-list">
+</div>
+</details>
+<div id="access-list">
+</div>
+<form id="access-form">
+<div class="two">
+<label>Correo electrónico<input type="email" name="email" maxlength="254" required>
+</label>
+<label>Rol<select name="role" required>
+<option value="">Selecciona un rol</option>
+<option value="viewer">Consulta</option>
+<option value="admin">Administrador</option>
+</select>
+</label>
+</div>
+<p class="hint role-help"><strong>Administrador:</strong> puede visualizar y gestionar todos los módulos de esta compañía. Su acceso queda limitado a una sola compañía.</p>
+<button type="submit">Guardar acceso</button>
+</form>
+</section>
+<section class="view" data-view="registrar">
+<details open id="company-panel" class="card compact" hidden>
+<summary>Registrar una empresa</summary>
+<button id="open-company" type="button">+ Crear empresa</button>
+<form id="company-form" class="company-form">
+<label>Razón social<input name="name" required maxlength="200">
+</label>
+<label>NIT sin dígito de verificación<input name="nit" required pattern="[0-9]{5,15}" inputmode="numeric">
+</label>
+<button type="submit">Guardar empresa</button>
+</form>
+</details>
+</section>
+<p id="view-empty" class="empty" hidden>Selecciona o registra una empresa para abrir esta sección.</p>
+<section id="profiles" hidden>
+<details open class="card compact view" data-view="empresa">
+<summary>Datos de la empresa activa</summary>
+<p id="profile-status" class="hint">
+</p>
+<form id="tax-form">
+<fieldset>
+<div class="two">
+<label>Nombre completo o razón social<input name="name" maxlength="200" required>
+</label>
+<label>Tipo de documento<select name="documentType">
+<option value="NIT">NIT</option>
+<option value="CC">Cédula de ciudadanía</option>
+<option value="CE">Cédula de extranjería</option>
+</select>
+</label>
+<label>Número sin puntos ni guiones<input name="identification" pattern="[0-9]{5,15}" required>
+</label>
+<label>Dígito de verificación (solo NIT)<input name="dv" pattern="[0-9]" maxlength="1" required>
+</label>
+<label>Correo electrónico<input name="email" type="email" maxlength="254" required>
+</label>
+<label>Teléfono (opcional)<input name="phone" maxlength="30">
+</label>
+<label>Dirección en Colombia<input name="address" maxlength="250" required>
+</label>
+<label>Departamento<input name="department" maxlength="100" required>
+</label>
+<label>Municipio<input name="municipality" maxlength="100" required>
+</label>
+<label>Condición frente al IVA<select name="vatStatus">
+<option value="por_confirmar">Por confirmar</option>
+<option value="responsable">Responsable de IVA</option>
+<option value="no_responsable">No responsable de IVA</option>
+</select>
+</label>
+</div>
+<label>Responsabilidades tributarias según RUT<textarea name="taxResponsibilities" rows="2" maxlength="300" required placeholder="Transcribe los códigos y descripciones que figuran en el RUT">
+</textarea>
+</label>
+<button type="submit">Guardar datos de la empresa</button>
+</fieldset>
+</form>
+</details>
+<details open class="card compact view" data-view="clientes">
+<summary>Directorio de clientes</summary>
+<p class="hint">Clientes de la empresa activa. Esta primera versión admite NIT, CC y CE numéricos y direcciones en Colombia. Los datos tributarios se transcriben del RUT; todavía no se verifican ante la DIAN.</p>
+<div id="customer-list">
+</div>
+<button id="new-customer" type="button" class="quiet">+ Nuevo cliente</button>
+<form id="customer-form">
+<fieldset>
+<div class="two">
+<label>Nombre completo o razón social<input name="name" maxlength="200" required>
+</label>
+<label>Tipo de documento<select name="documentType">
+<option value="NIT">NIT</option>
+<option value="CC">Cédula de ciudadanía</option>
+<option value="CE">Cédula de extranjería</option>
+</select>
+</label>
+<label>Número sin puntos ni guiones<input name="identification" pattern="[0-9]{5,15}" required>
+</label>
+<label>Dígito de verificación (solo NIT)<input name="dv" pattern="[0-9]" maxlength="1" required>
+</label>
+<label>Correo electrónico<input name="email" type="email" maxlength="254" required>
+</label>
+<label>Teléfono (opcional)<input name="phone" maxlength="30">
+</label>
+<label>Dirección en Colombia<input name="address" maxlength="250" required>
+</label>
+<label>Departamento<input name="department" maxlength="100" required>
+</label>
+<label>Municipio<input name="municipality" maxlength="100" required>
+</label>
+<label>Condición frente al IVA<select name="vatStatus">
+<option value="por_confirmar">Por confirmar</option>
+<option value="responsable">Responsable de IVA</option>
+<option value="no_responsable">No responsable de IVA</option>
+</select>
+</label>
+</div>
+<label>Responsabilidades tributarias según RUT<textarea name="taxResponsibilities" rows="2" maxlength="300" required placeholder="Transcribe los códigos y descripciones que figuran en el RUT">
+</textarea>
+</label>
+<button type="submit">Guardar cliente</button>
+</fieldset>
+</form>
+</details>
+</section>
+<div class="document-views">
+<section class="card view" data-view="nuevo">
+<div class="section-head">
+<div>
+<div class="eyebrow">01 / PREPARAR</div>
+<h2>Nuevo borrador</h2>
+<button id="open-document" type="button">+ Crear documento</button>
+</div>
+<span class="badge">COP</span>
+</div>
+<p id="edit-notice" class="notice" hidden>
+</p>
+<button id="cancel-edit" type="button" class="quiet" hidden>Cancelar edición</button>
+<form id="draft-form">
+<fieldset id="draft-fields" disabled>
+<label hidden>Cliente registrado<select id="customer-picker" required>
+<option value="">Selecciona un cliente registrado</option>
+</select>
+</label>
+<button id="quick-customer" type="button" class="quiet">+ Crear cliente sin salir de la factura</button>
+<p class="hint">El comprador se toma del directorio de esta compañía. Las notas conservan el comprador de la factura de origen.</p>
+<div class="two">
+<label>Tipo de documento<select name="kind" id="kind">
+<option value="INVOICE">Factura electrónica</option>
+<option value="CREDIT_NOTE">Nota crédito</option>
+<option value="DEBIT_NOTE">Nota débito</option>
+</select>
+</label>
+<label>Comprador<input name="buyer_name" required maxlength="200" placeholder="Nombre o razón social">
+</label>
+</div>
+<label>Identificación del comprador<input name="buyer_id" required pattern="[0-9]{5,15}" inputmode="numeric" placeholder="Sin puntos ni guiones">
+</label>
+<div id="reference-fields" hidden>
+<p id="note-guidance" class="notice">
+</p>
+<p id="note-origin" class="hint">
+</p>
+<label>Borrador de factura de referencia<select name="reference_id" id="reference">
+</select>
+</label>
+<label>Motivo de la nota<textarea name="reason" maxlength="500" rows="2">
+</textarea>
+</label>
+<p class="hint">En esta etapa las notas se relacionan con borradores internos. La referencia fiscal con CUFE está pendiente.</p>
+</div>
+<section id="payment-terms">
+<h3>Condiciones de pago</h3>
+<p class="hint">Son condiciones previstas del borrador. Elegir contado no registra un pago.</p>
+<div class="two">
+<label>Fecha del documento<input type="date" name="document_date" min="2000-01-01" max="2099-12-31">
+</label>
+<label>Forma de pago<select name="payment_form">
+<option value="CASH">Contado</option>
+<option value="CREDIT">Crédito</option>
+</select>
+</label>
+<label>Plazo en días<input name="payment_days" type="number" min="0" max="3650" step="1" value="0">
+</label>
+<label>Medio esperado<select name="payment_method">
+<option value="UNSPECIFIED">Por definir</option>
+<option value="CASH">Efectivo</option>
+<option value="TRANSFER">Transferencia</option>
+<option value="CARD">Tarjeta</option>
+<option value="PSE">PSE</option>
+<option value="CHECK">Cheque</option>
+</select>
+</label>
+</div>
+<p id="payment-preview" role="status">
+</p>
+</section>
+<label id="refresh-context-label" hidden>
+<input type="checkbox" id="refresh-context"> Actualizar datos de empresa y cliente desde sus fichas actuales al guardar</label>
+<p id="context-help" class="hint">
+</p>
+<div class="section-head line-heading">
+<h3>Conceptos</h3>
+<button id="add-line" type="button" class="quiet">+ Agregar concepto</button>
+</div>
+<p class="hint">Ingresa el precio unitario antes de IVA. Los importes se actualizan mientras completas los conceptos.</p>
+<p class="hint">Descuentos efectivos, sin condiciones, antes del IVA. Selecciona el tratamiento tributario que corresponda a la operación; el sistema no lo determina automáticamente. No incluye retenciones ni otros impuestos.</p>
+<div id="lines">
+</div>
+<aside id="draft-summary" class="draft-summary" aria-label="Resumen de importes" aria-live="polite" aria-atomic="true">
+</aside>
+<p class="hint">Cálculo preliminar con descuentos e IVA diferenciado. No incluye retenciones ni otros impuestos.</p>
+<button type="submit" id="save">
+<span id="save-label">Guardar borrador</span> <span>↗</span>
+</button>
+</fieldset>
+</form>
+</section>
+<section class="card view" data-view="documentos">
+<div class="section-head">
+<div>
+<div class="eyebrow">02 / REVISAR</div>
+<h2>Documentos</h2>
+</div>
+<div class="row-actions">
+<button id="new-document-table" type="button">+ Crear documento</button>
+<span id="count" class="badge">0</span>
+</div>
+</div>
+<form id="document-filters" class="document-filters">
+<label>Desde<input name="from" type="date">
+</label>
+<label>Hasta<input name="to" type="date">
+</label>
+<label>Tipo<select name="kind">
+<option value="">Todos</option>
+<option value="INVOICE">Factura electrónica</option>
+<option value="CREDIT_NOTE">Nota crédito</option>
+<option value="DEBIT_NOTE">Nota débito</option>
+</select>
+</label>
+<label>Identificación del comprador<input name="buyer" inputmode="numeric" pattern="[0-9]{5,15}" placeholder="NIT o documento completo">
+</label>
+<div class="filter-actions">
+<button type="submit">Aplicar filtros</button>
+<button type="button" id="history-clear" class="quiet">Limpiar</button>
+</div>
+</form>
+<p class="hint">Fecha de creación del borrador, hora de Colombia. Hasta incluye todo el día. La identificación se busca por coincidencia exacta.</p>
+<p id="history-status" role="status" aria-live="polite">
+</p>
+<div id="history">
+<p class="empty">Selecciona una empresa para ver sus borradores.</p>
+</div>
+<button id="history-more" type="button" class="quiet" hidden>Cargar más documentos</button>
+</section>
+</div>
+</div>
+</main>
+<p id="session-gate" role="status">Recuperando tu sesión…</p>
+<dialog id="audit-dialog">
+<h2>Historial de cambios</h2>
+<p class="hint">Autor, fecha y valores anteriores y nuevos. Los registros previos a esta función no tienen autor retrospectivo.</p>
+<button id="audit-close" type="button">Cerrar historial</button>
+<div id="audit-events">
+</div>
+<button id="audit-more" hidden>Cargar más cambios</button>
+</dialog>
+</body>
+</html>

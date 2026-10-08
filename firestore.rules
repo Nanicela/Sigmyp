@@ -1,0 +1,259 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function member(companyId) {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/companies/$(companyId)/members/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/companies/$(companyId)/members/$(request.auth.uid)).data.active == true;
+    }
+    match /users/{uid}/companies/{companyId} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+    match /companies/{companyId} {
+      allow get: if member(companyId);
+      allow list, write: if false;
+      match /drafts/{draftId} {
+        allow read: if member(companyId);
+        allow write: if false;
+      }
+      match /members/{uid} {
+        allow get: if request.auth != null && request.auth.uid == uid && member(companyId);
+        allow list, write: if false;
+      }
+      match /audit/{eventId} {
+        allow read: if member(companyId) &&
+          get(/databases/$(database)/documents/companies/$(companyId)/members/$(request.auth.uid)).data.role == 'owner';
+        allow write: if false;
+      }
+    }
+    // Spark: espacio privado del operador; solo borradores inmutables.
+    function own(uid) { return request.auth != null && request.auth.uid == uid; }
+    function shortText(v, max) { return v is string && v.size() > 0 && v.size() <= max; }
+    function validLine(l) {
+      let q = l.quantityUnits;
+      let p = l.priceCents;
+      let base = int((q * p + 5000) / 10000);
+      return l.keys().hasOnly(['description','quantityUnits','priceCents','rate','subtotalCents','taxCents','taxTreatment','discountBps','grossCents','discountCents']) &&
+        shortText(l.description,200) && q is int && q > 0 && q <= 100000000 &&
+        p is int && p > 0 && p <= 10000000000 && q * p <= 100000000000000 && base > 0 &&
+        l.subtotalCents is int && l.taxCents is int &&
+        (l.keys().hasAny(['taxTreatment','discountBps','grossCents','discountCents']) ?
+          l.keys().hasAll(['taxTreatment','discountBps','grossCents','discountCents']) &&
+          l.discountBps is int && l.discountBps >= 0 && l.discountBps <= 10000 &&
+          l.grossCents == base && l.discountCents is int && l.discountCents == int((base * l.discountBps + 5000) / 10000) &&
+          l.subtotalCents == base - l.discountCents &&
+          (l.taxTreatment == 'TAXED' ? l.rate in [5,19] : l.taxTreatment in ['EXEMPT','EXCLUDED','NOT_SUBJECT'] && l.rate == 0)
+          : l.rate in [5,19] && l.subtotalCents == base) &&
+        l.taxCents == int((l.subtotalCents * l.rate + 50) / 100);
+    }
+    function checkLine(ls, i) { return ls.size() <= i || validLine(ls[i]); }
+    function sumLines(ls, field) {
+      return (ls.size() > 0 ? ls[0][field] : 0)+(ls.size() > 1 ? ls[1][field] : 0)+(ls.size() > 2 ? ls[2][field] : 0);
+    }
+    function validDraft(d) {
+      let ls = d.lines;
+      return d.keys().hasOnly(['kind','buyer','reference_id','reason','currency','lines','subtotalCents','taxCents','totalCents','status','fiscal_validity','requestHash','createdAt','version','auditId','updatedBy','updatedAt','referenceLocked','lastOperation','schemaVersion','context','payment']) &&
+        (d.get('schemaVersion',1) == 1 ? !d.keys().hasAny(['context','payment','schemaVersion']) : d.schemaVersion == 2 && d.keys().hasAll(['context','payment'])) &&
+        d.status == 'DRAFT' && d.fiscal_validity == false && d.currency == 'COP' &&
+        d.createdAt is timestamp && d.requestHash is string && d.requestHash.matches('^[a-f0-9]{64}$') &&
+        d.buyer.keys().hasOnly(['name','identification']) && shortText(d.buyer.name,200) &&
+        d.buyer.identification is string && d.buyer.identification.matches('^[0-9]{5,15}$') &&
+        ls is list && ls.size() > 0 && ls.size() <= 3 && checkLine(ls,0) &&
+        d.subtotalCents is int && d.taxCents is int && d.totalCents is int &&
+        d.subtotalCents == sumLines(ls,'subtotalCents') && d.taxCents == sumLines(ls,'taxCents') &&
+        d.totalCents == d.subtotalCents + d.taxCents;
+    }
+    function validProfile(p) {
+      return p.keys().hasOnly(['name','documentType','identification','dv','email','phone','address','department','municipality','taxResponsibilities','vatStatus','createdAt','updatedAt','version','auditId','updatedBy']) &&
+        shortText(p.name,200) && p.documentType in ['NIT','CC','CE'] &&
+        p.identification is string && p.identification.matches('^[0-9]{5,15}$') &&
+        p.dv is string && (p.documentType == 'NIT' ? p.dv.matches('^[0-9]$') : p.dv == '') &&
+        shortText(p.email,254) && p.email.matches('^[^ @]+@[^ @]+[.][^ @]+$') &&
+        p.phone is string && p.phone.size() <= 30 && shortText(p.address,250) &&
+        shortText(p.department,100) && shortText(p.municipality,100) && shortText(p.taxResponsibilities,300) &&
+        p.vatStatus in ['responsable','no_responsable','por_confirmar'] &&
+        p.createdAt is timestamp && p.updatedAt == request.time;
+    }
+    function profileChange() {
+      return request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.identification == resource.data.identification &&
+        request.resource.data.documentType == resource.data.documentType;
+    }
+    // Archivo anterior: su propietario conserva lectura, sin nuevas escrituras.
+    match /workspaces/{uid}/companies/{companyId} {
+      allow read: if own(uid);
+      allow write: if false;
+      match /{document=**} {
+        allow read: if own(uid);
+        allow write: if false;
+      }
+    }
+    function platformAdmin() { return request.auth != null && request.auth.token.get('platformAdmin', false) == true; }
+    function verified() { return request.auth != null && request.auth.token.get('email_verified', false) == true; }
+    function orgRole(data) { return verified() ? data.members.get(request.auth.token.email, '') : ''; }
+    function orgAccess(id, roles) {
+      return platformAdmin() || orgRole(get(/databases/$(database)/documents/organizations/$(id)).data) in roles;
+    }
+    function orgReference(id, d) {
+      return (d.kind == 'INVOICE' && d.reference_id == null && d.reason == null) ||
+        (d.kind in ['CREDIT_NOTE','DEBIT_NOTE'] && shortText(d.reference_id,80) && shortText(d.reason,500) &&
+        get(/databases/$(database)/documents/organizations/$(id)/drafts/$(d.reference_id)).data.kind == 'INVOICE' &&
+        get(/databases/$(database)/documents/organizations/$(id)/drafts/$(d.reference_id)).data.buyer == d.buyer && getAfter(/databases/$(database)/documents/organizations/$(id)/drafts/$(d.reference_id)).data.referenceLocked == true);
+    }
+    function registered() {
+      return verified() && exists(/databases/$(database)/documents/registeredUsers/$(request.auth.uid));
+    }
+    function auditWrite(companyId,target,id,before) {
+      let d = request.resource.data;
+      let e = getAfter(/databases/$(database)/documents/organizations/$(companyId)/audit/$(d.auditId)).data;
+      return registered() && d.auditId is string && d.auditId.matches('^[a-zA-Z0-9-]{20,80}$') &&
+        d.updatedAt == request.time && d.updatedBy == request.auth.uid &&
+        d.version == (before == null ? 1 : before.get('version',0)+1) &&
+        e.target == target && e.targetId == id && e.before == before && e.after == d &&
+        e.actorUid == request.auth.uid && e.actorEmail == request.auth.token.email && e.at == request.time;
+    }
+    function validUser(p,uid) {
+      return p.keys().hasOnly(['uid','email','firstName','lastName','documentType','identification','phone','jobTitle','createdAt']) &&
+        p.uid == uid && p.email == request.auth.token.email && p.createdAt == request.time &&
+        shortText(p.firstName,80) && shortText(p.lastName,80) && p.documentType in ['CC','CE','PASAPORTE'] &&
+        p.identification is string && p.identification.matches('^[A-Za-z0-9-]{5,30}$') && shortText(p.phone,30) && shortText(p.jobTitle,100);
+    }
+    match /registeredUsers/{uid} {
+      allow get: if own(uid) || platformAdmin();
+      allow list: if platformAdmin();
+      allow create: if own(uid) && validUser(request.resource.data,uid);
+      allow update,delete: if false;
+    }
+    // Una reserva global por correo impide membresías simultáneas entre compañías.
+    match /companyAssignments/{email} {
+      allow get: if registered();
+      allow list: if platformAdmin();
+      allow create: if registered() && request.resource.data.keys().hasOnly(['companyId']) &&
+        request.resource.data.companyId is string &&
+        orgAccess(request.resource.data.companyId,['admin']) &&
+        getAfter(/databases/$(database)/documents/organizations/$(request.resource.data.companyId)).data.memberChangeEmail == email &&
+        getAfter(/databases/$(database)/documents/organizations/$(request.resource.data.companyId)).data.updatedAt == request.time &&
+        getAfter(/databases/$(database)/documents/organizations/$(request.resource.data.companyId)).data.members.get(email,'') in ['admin','billing','viewer'];
+      allow update: if false;
+      allow delete: if registered() && orgAccess(resource.data.companyId,['admin']) &&
+        getAfter(/databases/$(database)/documents/organizations/$(resource.data.companyId)).data.memberChangeEmail == email &&
+        getAfter(/databases/$(database)/documents/organizations/$(resource.data.companyId)).data.updatedAt == request.time &&
+        !getAfter(/databases/$(database)/documents/organizations/$(resource.data.companyId)).data.members.keys().hasAny([email]);
+    }
+    function singleCompanyChange(id) {
+      let email=request.resource.data.memberChangeEmail;
+      let members=request.resource.data.members;
+      return email is string && email.size() > 3 && email.size() <= 254 &&
+        members.diff(resource.data.members).affectedKeys().hasOnly([email]) &&
+        (members.keys().hasAny([email])
+          ? getAfter(/databases/$(database)/documents/companyAssignments/$(email)).data.companyId == id
+          : !existsAfter(/databases/$(database)/documents/companyAssignments/$(email)));
+    }
+    match /organizations/{companyId} {
+      allow read: if platformAdmin() || orgRole(resource.data) in ['admin','billing','viewer'];
+      allow create: if platformAdmin() && request.resource.data.keys().hasOnly(['name','nit','members','createdAt','updatedAt','version','auditId','updatedBy']) &&
+        shortText(request.resource.data.name,200) && companyId.matches('^[0-9]{5,15}$') && request.resource.data.nit == companyId &&
+        request.resource.data.members == {} && request.resource.data.createdAt == request.time && auditWrite(companyId,'company',companyId,null);
+      allow update: if (platformAdmin() || orgRole(resource.data) == 'admin') &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members','memberChangeEmail','updatedAt','updatedBy','version','auditId']) &&
+        request.resource.data.updatedAt == request.time && request.resource.data.members is map &&
+        request.resource.data.members.size() <= 50 && request.resource.data.members.values().hasOnly(['admin','billing','viewer']) &&
+        (platformAdmin() || orgRole(request.resource.data) == 'admin') && singleCompanyChange(companyId) && auditWrite(companyId,'company',companyId,resource.data);
+      allow delete: if false;
+      match /audit/{eventId} {
+        function targetPath(e) {
+          return e.target == 'company' ? /databases/$(database)/documents/organizations/$(companyId) : /databases/$(database)/documents/organizations/$(companyId)/$(e.target)/$(e.targetId);
+        }
+        allow read: if orgAccess(companyId,['admin']);
+        function validAuditEvent(){
+          let e=request.resource.data;
+          let path=targetPath(e);
+          return registered() && e.keys().hasOnly(['target','targetId','actorUid','actorEmail','at','before','after']) &&
+          e.target in ['company','drafts','profiles','customers','products'] &&
+          e.actorUid == request.auth.uid && e.actorEmail == request.auth.token.email && e.at == request.time &&
+          e.after == getAfter(path).data &&
+          e.after.auditId == eventId && e.after.updatedAt == request.time &&
+          e.before == (exists(path) ? get(path).data : null) &&
+          // Lines 2/3 and v2 context/payment are checked in the exact atomic audit event.
+          // Line 1, totals, schema and permissions are checked on the target draft.
+          // Keeps each rule evaluation within the budget for three invoice lines.
+          (e.target != 'drafts' || (documentDetails(e.after,e.before) && checkLine(e.after.lines,1) && checkLine(e.after.lines,2)));
+        }
+        allow create: if validAuditEvent();
+        allow update,delete: if false;
+      }
+      function validPayment(p) {
+        return p is map && p.keys().hasAll(['form','method','days','documentDate','dueDate']) && p.keys().hasOnly(['form','method','days','documentDate','dueDate']) &&
+          p.form in ['CASH','CREDIT'] && p.method in ['UNSPECIFIED','CASH','TRANSFER','CARD','PSE','CHECK'] &&
+          p.days is int && p.days >= 0 && p.days <= 3650 && (p.form == 'CASH' ? p.days == 0 : p.days > 0) &&
+          p.documentDate is timestamp && p.dueDate is timestamp && p.documentDate == p.documentDate.date() &&
+          p.documentDate >= timestamp.date(2000,1,1) && p.dueDate < timestamp.date(2100,1,1) &&
+          p.dueDate == p.documentDate + duration.value(p.days,'d');
+      }
+      function freshContext(c,d) {
+        return c is map && c.keys().hasOnly(['issuer','buyer','customerId']) && c.customerId is string &&
+          c.customerId.matches('^(NIT|CC|CE)_[0-9]{5,15}$') &&
+          c.issuer == get(/databases/$(database)/documents/organizations/$(companyId)/profiles/tax).data &&
+          c.buyer == get(/databases/$(database)/documents/organizations/$(companyId)/customers/$(c.customerId)).data &&
+          c.buyer.name == d.buyer.name && c.buyer.identification == d.buyer.identification;
+      }
+      function contextChange(d,old) {
+        return old != null && d.context == old.get('context',null) && (d.context == null || d.buyer == old.buyer);
+      }
+      function documentDetails(d,old) {
+        return d.get('schemaVersion',1) == 1 ? (old == null || old.get('schemaVersion',1) == 1) :
+          (d.kind == 'INVOICE' ? validPayment(d.payment) && (contextChange(d,old) || freshContext(d.context,d)) :
+          d.payment == null && d.context == get(/databases/$(database)/documents/organizations/$(companyId)/drafts/$(d.reference_id)).data.get('context',null));
+      }
+      match /drafts/{id} {
+        allow read: if orgAccess(companyId,['admin','billing','viewer']);
+        function createDraftAllowed(){
+          let d=request.resource.data;
+          return orgAccess(companyId,['admin','billing']) && exists(/databases/$(database)/documents/organizations/$(companyId)) && validDraft(d) && orgReference(companyId,d) && d.createdAt == request.time && d.referenceLocked == false && auditWrite(companyId,'drafts',id,null);
+        }
+        function updateDraftAllowed(){
+          let d=request.resource.data;
+          let old=resource.data;
+          return orgAccess(companyId,['admin','billing']) && old.status == 'DRAFT' && old.fiscal_validity == false &&
+          validDraft(d) && orgReference(companyId,d) &&
+          d.createdAt == old.createdAt && d.kind == old.kind && d.reference_id == old.reference_id &&
+          ((old.get('referenceLocked',false) == false && d.referenceLocked == false) ||
+          (old.kind == 'INVOICE' && old.get('referenceLocked',false) == false && d.referenceLocked == true && d.diff(old).affectedKeys().hasOnly(['referenceLocked','version','auditId','updatedBy','updatedAt']))) &&
+          auditWrite(companyId,'drafts',id,old);
+        }
+        allow create: if createDraftAllowed();
+        allow update: if updateDraftAllowed();
+        allow delete: if false;
+      }
+      match /profiles/{id} {
+        allow read: if orgAccess(companyId,['admin','billing','viewer']);
+        allow create: if orgAccess(companyId,['admin']) && exists(/databases/$(database)/documents/organizations/$(companyId)) && id == 'tax' && validProfile(request.resource.data) && request.resource.data.documentType == 'NIT' && request.resource.data.identification == companyId && request.resource.data.createdAt == request.time && auditWrite(companyId,'profiles',id,null);
+        allow update: if orgAccess(companyId,['admin']) && id == 'tax' && validProfile(request.resource.data) && profileChange() && auditWrite(companyId,'profiles',id,resource.data);
+        allow delete: if false;
+      }
+      match /products/{id} {
+        function validProduct(p) {
+          return p.keys().hasOnly(['code','name','description','type','priceCents','rate','active','createdAt','updatedAt','version','auditId','updatedBy']) &&
+            p.code == id && p.code.matches('^[A-Z0-9_-]{1,30}$') && shortText(p.name,150) &&
+            p.description is string && p.description.size() <= 500 && p.type in ['PRODUCT','SERVICE'] &&
+            p.priceCents is int && p.priceCents > 0 && p.priceCents <= 10000000000 &&
+            p.rate in [5,19] && p.active is bool && p.createdAt is timestamp;
+        }
+        allow read: if orgAccess(companyId,['admin','billing','viewer']);
+        allow create: if orgAccess(companyId,['admin']) && exists(/databases/$(database)/documents/organizations/$(companyId)) &&
+          validProduct(request.resource.data) && request.resource.data.createdAt == request.time && auditWrite(companyId,'products',id,null);
+        allow update: if orgAccess(companyId,['admin']) && validProduct(request.resource.data) &&
+          request.resource.data.code == resource.data.code && request.resource.data.createdAt == resource.data.createdAt && auditWrite(companyId,'products',id,resource.data);
+        allow delete: if false;
+      }
+      match /customers/{id} {
+        allow read: if orgAccess(companyId,['admin','billing','viewer']);
+        allow create: if orgAccess(companyId,['admin','billing']) && exists(/databases/$(database)/documents/organizations/$(companyId)) && validProfile(request.resource.data) && id == request.resource.data.documentType + '_' + request.resource.data.identification && request.resource.data.createdAt == request.time && auditWrite(companyId,'customers',id,null);
+        allow update: if orgAccess(companyId,['admin','billing']) && validProfile(request.resource.data) && profileChange() && auditWrite(companyId,'customers',id,resource.data);
+        allow delete: if false;
+      }
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
