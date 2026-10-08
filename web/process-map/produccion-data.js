@@ -229,7 +229,7 @@ const productionData = {
         "output": "Verificación de Formatos existentes y comunicación con almacén (Compras) sobre componentes requeridos",
         "result": "Formatos con checkist según OP",
         "decision": false,
-        "note": "Título descriptivo de la fila inicial: el Excel no asigna un nombre de actividad a esta fila."
+        "note": ""
       },
       {
         "title": "¿Requiere ensamble?",
