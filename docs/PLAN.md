@@ -1,6 +1,6 @@
 # Plan de construcción y habilitación
 
-Actualizado: 5 de octubre de 2026. Plan vigente; sustituye el orden del 28 de septiembre. Las evidencias de cada entrega están en [VALIDACION.md](VALIDACION.md).
+Actualizado: 7 de octubre de 2026. Plan vigente; sustituye el orden del 28 de septiembre. Las evidencias de cada entrega están en [VALIDACION.md](VALIDACION.md).
 
 ## Objetivo y decisiones
 
@@ -12,6 +12,7 @@ Construir con Firebase un sistema de facturación para varias compañías, comen
 - Mantener la integración DIAN para la última etapa; preparar desde ahora los datos y límites entre componentes que necesitará.
 - El alcance de trabajo es facturación y, progresivamente, pagos/cartera. Contabilidad integral, inventario, compras, bancos, nómina y cuentas por pagar no quedan incluidos automáticamente.
 - Se asumen diez compañías iniciales. Volumen mensual, concurrencia, presupuesto operativo y fecha objetivo siguen por definir; no bloquean el siguiente incremento local.
+- La interfaz se migra a Vue 3 y Vite sin cambiar colecciones, reglas ni datos. Durante la transición se conserva una capa de compatibilidad con la lógica validada; cada módulo se reemplazará de forma gradual y solo se retirará esa capa cuando exista paridad demostrada.
 
 ## Estado real de los avances
 
@@ -102,6 +103,8 @@ Colecciones activas:
 Datos futuros a diseñar antes de implementarlos: pagos y sus aplicaciones, series/resoluciones, documentos fiscales inmutables, envíos, respuestas, eventos y referencias a artefactos. Estos nombres conceptuales no son colecciones ya creadas. Moneda explícita desde el modelo; multimoneda y tipos documentales adicionales son futuras ampliaciones a evaluar.
 
 ## Publicación y siguiente entrega
+
+La migración Vue está aislada en la rama local `migration/vue3`. Landing, aplicación, mapa y caracterizaciones ya son renderizados por Vue en la compilación local, conservando las rutas y controles existentes. La usuaria pidió probarla antes de publicarla: no se desplegará en Firebase ni se enviará a GitHub hasta una aprobación posterior expresa.
 
 La etapa 1 tiene una entrega parcial publicada y comprobada en emuladores: esquema histórico y condiciones de pago. La usuaria priorizó el motor de descuentos e impuestos; referencias/unidades de productos y separación de estados quedan pendientes. Pagos y aplicaciones siguen en la etapa 3. La usuaria reafirmó el 5 de octubre mantener DIAN al final. La entrega está publicada en https://sigmyp.web.app/ y dist-cloud actualizado para la vista local conectada a Firebase real. El puerto 5500 conserva el entorno de emuladores.
 

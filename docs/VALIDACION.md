@@ -496,3 +496,11 @@ Después de publicar el ajuste de altura se recorrieron los nueve procesos y 147
 ### 7 de octubre de 2026 · Actualización del logo SIGMYP
 
 Se reemplazó `web/logo-sigmyp.png` por el archivo PNG RGBA de 1448 × 1086 entregado por la propietaria. El archivo conservado coincide byte por byte con el original. Se actualizó el texto alternativo al lema «Sistema integrado de gestión para micro y pequeñas empresas» y el build añade una versión por hash al logo. La revisión local confirmó su proporción en la cabecera autenticada; la prueba de dominio aprobó.
+
+### 7 de octubre de 2026 · Primera fase local de migración a Vue 3
+
+Se creó la rama local `migration/vue3` sin modificar la rama principal. La compilación usa Vue 3, Vite y Pinia para renderizar el landing, la aplicación autenticada, el mapa y las diez rutas de procesos. Las URLs existentes (`/`, `/app.html` y `/procesos/*.html`) se conservan. La lógica validada de autenticación, permisos, compañías, perfiles, documentos y caracterizaciones se carga mediante un puente de compatibilidad después del montaje de Vue; esto permite cambiar la arquitectura visual sin modificar el esquema de Firestore ni reescribir operaciones sensibles en un solo paso.
+
+La prueba automatizada `tests/vue-build.test.mjs` genera una distribución aislada y comprueba las dos entradas, las once páginas de procesos, la conservación exacta de todos los controles con identificador y la configuración del proyecto de prueba. Ocho suites locales aprobaron: autenticación permitida, dominio canónico, selección de compañía, dominio de cálculos, resumen de importes, condiciones de pago, acceso al mapa y compilación Vue.
+
+Prueba visual local conectada al Firebase actual: la sesión persistente abrió la compañía DEMO, cargó su ficha y mantuvo las acciones Ver/Editar. Una vista local aislada recorrió el mapa Vue, abrió Planeación, avanzó a la segunda actividad y cambió a Recursos y requisitos; se mostraron las nueve actividades, pestañas, tarjetas y navegación esperadas. No se desplegó Hosting, no se enviaron cambios a GitHub y no se modificaron reglas, Functions ni datos.

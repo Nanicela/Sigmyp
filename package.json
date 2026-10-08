@@ -8,18 +8,25 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node --test tests/domain.test.mjs",
+    "generate:vue": "node scripts/generate-vue-shells.mjs",
+    "dev:vue": "node scripts/generate-vue-shells.mjs && vite --config vite.config.js",
+    "test": "node --test tests/domain.test.mjs tests/vue-build.test.mjs",
     "test:firebase": "firebase emulators:exec --project demo-facturacion --only auth,firestore,functions 'node --test tests/firebase.test.mjs'",
     "emulators": "npm run build && firebase emulators:start --project demo-facturacion --only auth,firestore,functions,hosting",
     "seed:emulator": "node scripts/seed-emulator.mjs",
     "test:access": "node --test tests/audit-edit.test.mjs"
   },
   "dependencies": {
-    "firebase": "12.19.0"
+    "firebase": "12.19.0",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.43",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.0",
+    "@vitejs/plugin-vue": "^5.2.4",
     "esbuild": "^0.25.0",
-    "firebase-tools": "15.31.0"
+    "firebase-tools": "15.31.0",
+    "vite": "^6.4.1"
   }
 }

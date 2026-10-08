@@ -1,4 +1,6 @@
 node_modules/
+vue/src/generated/
+vue/procesos/
 functions/node_modules/
 dist/
 *-debug.log
