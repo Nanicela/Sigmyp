@@ -528,3 +528,9 @@ La compilación y las pruebas principales aprobaron. Este corte permanece local:
 `CompanyProfile.vue` presenta la ficha de la compañía activa en una tabla uniforme y administra dos estados del mismo modal: consulta completa y edición. Los botones se generan según el rol efectivo; Administrador y Superadministrador pueden editar, mientras Consulta conserva únicamente la visualización. El formulario mantiene los campos, restricciones y nombres usados por la transacción auditada existente.
 
 La prueba local con Administrador DEMO cargó la ficha `999000001`, abrió Ver empresa con identificación, contacto, ubicación, responsabilidades y condición de IVA, y abrió Editar con la razón social actual. El modal se cerró sin guardar, por lo que no se modificaron datos. La consola no registró errores y la compilación y pruebas principales aprobaron. No se desplegó Firebase ni se envió a GitHub.
+
+### 9 de octubre de 2026 · Corrección del acceso Google local
+
+El inicio Google de la migración Vue distinguió los dos entornos. En `localhost` y `127.0.0.1` usa `signInWithPopup`, alternativa indicada por Firebase cuando la aplicación se sirve fuera de Firebase Hosting y el dominio local no publica las rutas auxiliares `__/auth/*`. En `sigmyp.web.app` conserva `signInWithRedirect`, el flujo ya configurado y validado para el dominio público.
+
+La compilación y las pruebas principales confirmaron que ambos recorridos permanecen incluidos. No se cerró la sesión local existente para evitar interrumpir el trabajo ni se efectuó un acceso con una cuenta real durante la validación. No se desplegó Firebase ni se envió a GitHub.

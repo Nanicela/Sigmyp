@@ -5,7 +5,7 @@ import {
   browserLocalPersistence, connectAuthEmulator, createUserWithEmailAndPassword,
   getAuth, getIdTokenResult, getRedirectResult, GoogleAuthProvider,
   onAuthStateChanged, reload, sendEmailVerification, sendPasswordResetEmail,
-  setPersistence, signInWithEmailAndPassword, signInWithRedirect, signOut
+  setPersistence, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, signOut
 } from 'firebase/auth';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 import { allowedSignInProvider } from '../../../../web/auth-provider.js';
@@ -87,6 +87,12 @@ async function googleLogin() {
   await run('google', async () => {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt:'select_account' });
+    const localDevelopment = ['localhost','127.0.0.1'].includes(location.hostname);
+    if (localDevelopment) {
+      show('Selecciona tu cuenta de Google en la ventana de acceso.');
+      await signInWithPopup(auth, provider);
+      return;
+    }
     show('Te llevaremos a Google y volverás aquí al completar el acceso.');
     await signInWithRedirect(auth, provider);
   });

@@ -33,6 +33,8 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
   const vueLanding = await readFile(join(project, 'vue/src/components/auth/AuthLanding.vue'), 'utf8');
   assert.deepEqual(ids(vueLanding), ids(currentLanding), 'el módulo Vue de acceso debe conservar todos los formularios y controles');
   assert.doesNotMatch(await readFile(join(project, 'vue/src/landing-main.js'), 'utf8'), /web\/landing\.js/);
+  assert.match(vueLanding, /signInWithPopup\(auth, provider\)/, 'localhost debe iniciar Google en una ventana compatible con el servidor local');
+  assert.match(vueLanding, /signInWithRedirect\(auth, provider\)/, 'Hosting debe conservar el retorno por redirección configurado');
 
   const currentApp = await readFile(join(project, 'web/app.html'), 'utf8');
   const generatedApp = await readFile(join(project, 'vue/src/generated/AppShell.vue'), 'utf8');
