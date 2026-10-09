@@ -110,6 +110,8 @@ El primer corte nativo ya reemplaza el código de interfaz del landing/autentica
 
 El segundo corte ya componentizó la cabecera autenticada, el menú del usuario y el selector de compañía. El siguiente incremento debe convertir Datos de empresa y después Usuarios y permisos. La carga de compañías continúa usando el servicio actual durante esta transición; se trasladará a un store Vue cuando las dos pantallas administrativas consuman el mismo estado.
 
+Datos de empresa ya usa una tabla y modales Vue para consulta y edición. Su persistencia auditada continúa en el servicio existente para no alterar las reglas ni el formato de Firestore. El próximo corte es Usuarios y permisos; al completarlo, el estado compartido de compañía, rol y ficha podrá centralizarse en Pinia y se retirarán los puentes de estas pantallas administrativas.
+
 La etapa 1 tiene una entrega parcial publicada y comprobada en emuladores: esquema histórico y condiciones de pago. La usuaria priorizó el motor de descuentos e impuestos; referencias/unidades de productos y separación de estados quedan pendientes. Pagos y aplicaciones siguen en la etapa 3. La usuaria reafirmó el 5 de octubre mantener DIAN al final. La entrega está publicada en https://sigmyp.web.app/ y dist-cloud actualizado para la vista local conectada a Firebase real. El puerto 5500 conserva el entorno de emuladores.
 
 La entrega del catálogo incluyó reglas y Hosting compatibles y reconstrucción de dist-cloud. Para futuras entregas que cambien reglas, el comando publish actual solo publica Hosting y no basta. Conservar dist, dist-cloud y dist-release separados; no modificar datos reales ni activar servicios de pago como consecuencia implícita de actualizar este plan.

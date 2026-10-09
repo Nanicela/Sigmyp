@@ -16,18 +16,24 @@ export function normalizeProfile(input) {
 export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
   const root = document.querySelector('#profiles');
   let company = '', epoch = 0, customers = [], editing = '', profile = null, loading = false;
-  const companyForm = root.querySelector('#tax-form'), customerForm = root.querySelector('#customer-form');
+  const companyForm = document.querySelector('#tax-form'), customerForm = root.querySelector('#customer-form');
   const customerModal=modal('Cliente',customerForm,{onClose:()=>resetCustomer()});
-  const companyModal=modal('Datos de empresa',companyForm);
-  const companyList=node('div');root.querySelector('[data-view="empresa"]').append(companyList);
+  const vueCompany=window.__sigmypCompanyProfile;
+  const companyModal=vueCompany||modal('Datos de empresa',companyForm);
+  const companyList=vueCompany?null:node('div');
+  if(companyList)root.querySelector('[data-view="empresa"]').append(companyList);
   function renderCompany(){const actions=node('div','','row-actions');
+    if(vueCompany){vueCompany.render({company,profile,loading,canEdit:['platform','admin'].includes(getRole())});return;}
     actions.append(action('Ver empresa',()=>showCompany(false)));
     if(['platform','admin'].includes(getRole()))actions.append(action(profile?'Editar':'Completar datos',()=>showCompany(true)));
     table(companyList,['Empresa','NIT','Correo','Acciones'],company?[[profile?.name||'Ficha pendiente',company,profile?.email||'—',actions]]:[],'Datos de empresa');}
   function showCompany(edit=false){if(loading||!company)return;
-    if(edit){if(!['platform','admin'].includes(getRole()))return;fields(companyForm,profile||{name:document.querySelector('#company').selectedOptions[0]?.textContent,documentType:'NIT',identification:company});companyModal.open();return;}
+    if(edit){if(!['platform','admin'].includes(getRole()))return;fields(companyForm,profile||{name:document.querySelector('#company').selectedOptions[0]?.textContent,documentType:'NIT',identification:company});vueCompany?companyModal.openEdit():companyModal.open();return;}
+    if(vueCompany){companyModal.openView();return;}
     details(profile?.name||'Empresa',[['Identificación',company],['Nombre',profile?.name],['Correo',profile?.email],['Teléfono',profile?.phone],['Dirección',profile?.address],['Departamento',profile?.department],['Municipio',profile?.municipality],['Responsabilidades',profile?.taxResponsibilities],['Condición IVA',profile?.vatStatus]]);
   }
+  const companyAction=event=>showCompany(event.detail==='edit');
+  if(vueCompany)window.addEventListener('sigmyp:company-profile-action',companyAction);
   const chooser = document.querySelector('#customer-picker');
   const directory=createCustomerList(root.querySelector('#customer-list'),{onEdit:c=>{
     editing=c.id;fields(customerForm,c);customerForm.hidden=false;customerForm.elements.documentType.disabled=true;customerForm.elements.identification.readOnly=true;customerForm.querySelector('[type=submit]').textContent='Guardar cambios del cliente';customerModal.open('Editar cliente');customerForm.elements.name.focus();
@@ -55,7 +61,7 @@ export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
   }
   async function load(id, name) {
     quickDialog.close();directory.close();customerModal.close();companyModal.close();
-    company = id; const current = ++epoch; profile = null; customers = []; resetCustomer(); render();
+    company = id; const current = ++epoch; profile = null; customers = []; loading=!!id;resetCustomer(); render();renderCompany();
     root.hidden = !id; chooser.closest('label').hidden = !id;
     if (!id) return;
     fields(companyForm,{ name, documentType:'NIT',identification:id });

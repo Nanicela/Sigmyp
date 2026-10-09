@@ -522,3 +522,9 @@ La compilación conectada al proyecto actual abrió una sesión persistente y ca
 `CompanyChooser.vue` conserva el selector compartido por la navegación y la carga de datos. La sesión Administrador de DEMO recuperó automáticamente su única compañía (`999000001`), mostró el nombre actualizado y limitó el alcance a esa empresa. El menú mostró nombre, correo y «Rol · Administrador» junto con las tres acciones autorizadas; Escape lo cerró y devolvió `aria-expanded` a `false`. La consola no registró errores.
 
 La compilación y las pruebas principales aprobaron. Este corte permanece local: no se desplegó Firebase, no se envió a GitHub y no se modificaron datos, reglas ni Functions.
+
+### 9 de octubre de 2026 · Datos de empresa en Vue
+
+`CompanyProfile.vue` presenta la ficha de la compañía activa en una tabla uniforme y administra dos estados del mismo modal: consulta completa y edición. Los botones se generan según el rol efectivo; Administrador y Superadministrador pueden editar, mientras Consulta conserva únicamente la visualización. El formulario mantiene los campos, restricciones y nombres usados por la transacción auditada existente.
+
+La prueba local con Administrador DEMO cargó la ficha `999000001`, abrió Ver empresa con identificación, contacto, ubicación, responsabilidades y condición de IVA, y abrió Editar con la razón social actual. El modal se cerró sin guardar, por lo que no se modificaron datos. La consola no registró errores y la compilación y pruebas principales aprobaron. No se desplegó Firebase ni se envió a GitHub.

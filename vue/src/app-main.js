@@ -3,6 +3,7 @@ import { createPinia } from 'pinia';
 import AppShell from './generated/AppShell.vue';
 import AppHeader from './components/app/AppHeader.vue';
 import CompanyChooser from './components/app/CompanyChooser.vue';
+import CompanyProfile from './components/company/CompanyProfile.vue';
 import { useApplicationStore } from './stores/application.js';
 
 const pinia = createPinia();
@@ -13,6 +14,7 @@ await nextTick();
 // conserva temporalmente la sesión, permisos y consultas a Firebase.
 createApp(AppHeader).mount('main > header');
 createApp(CompanyChooser).mount('.company-bar');
+window.__sigmypCompanyProfile = createApp(CompanyProfile).mount('[data-view="empresa"]');
 await nextTick();
 
 // Puente de compatibilidad: Vue renderiza la interfaz y la lógica existente
