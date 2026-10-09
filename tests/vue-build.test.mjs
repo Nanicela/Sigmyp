@@ -29,6 +29,11 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
   assert.match(index, /assets\/index-[^".]+\.js/);
   assert.match(app, /assets\/app-[^".]+\.js/);
 
+  const currentLanding = await readFile(join(project, 'web/index.html'), 'utf8');
+  const vueLanding = await readFile(join(project, 'vue/src/components/auth/AuthLanding.vue'), 'utf8');
+  assert.deepEqual(ids(vueLanding), ids(currentLanding), 'el módulo Vue de acceso debe conservar todos los formularios y controles');
+  assert.doesNotMatch(await readFile(join(project, 'vue/src/landing-main.js'), 'utf8'), /web\/landing\.js/);
+
   const currentApp = await readFile(join(project, 'web/app.html'), 'utf8');
   const generatedApp = await readFile(join(project, 'vue/src/generated/AppShell.vue'), 'utf8');
   assert.deepEqual(ids(generatedApp), ids(currentApp), 'la plantilla Vue debe conservar todos los controles identificados');
@@ -40,10 +45,17 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
     const html = await readFile(join(output, 'procesos', file), 'utf8');
     assert.match(html, /id="process-app"/);
     assert.match(html, /assets\/process-main-[^".]+\.js/);
-    const source = await readFile(join(project, 'web/process-map', file), 'utf8');
-    const shell = await readFile(join(project, 'vue/src/generated/process', file.replace(/\.html$/, '.vue')), 'utf8');
-    assert.deepEqual(ids(shell), ids(source), `${file} debe conservar sus controles`);
+    if (file !== 'index.html') {
+      const source = await readFile(join(project, 'web/process-map', file), 'utf8');
+      const shell = await readFile(join(project, 'vue/src/generated/process', file.replace(/\.html$/, '.vue')), 'utf8');
+      assert.deepEqual(ids(shell), ids(source), `${file} debe conservar sus controles`);
+    }
   }
+
+  const processMap = await readFile(join(project, 'vue/src/components/processes/ProcessMap.vue'), 'utf8');
+  for (const page of ['planeacion','mejora-continua','comercial','desarrollo','compras','produccion','talento-humano','sg-sst','financiera'])
+    assert.match(processMap, new RegExp(`href:'${page}\\.html'`), `el mapa Vue debe conservar ${page}`);
+  assert.match(await readFile(join(project, 'vue/src/process-main.js'), 'utf8'), /file === 'index\.html' \? \[\] : page\.scripts/);
 
   assert.equal(JSON.parse(await readFile(join(output, 'firebase-config.json'), 'utf8')).firebase.projectId, 'demo-facturacion');
 });

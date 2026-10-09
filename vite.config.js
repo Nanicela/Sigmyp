@@ -18,6 +18,7 @@ export default defineConfig({
     outDir: outputDir,
     emptyOutDir: true,
     target: 'es2022',
+    modulePreload: { polyfill: false },
     rollupOptions: {
       input: {
         index: resolve(process.cwd(), 'vue/index.html'),

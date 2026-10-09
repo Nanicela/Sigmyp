@@ -506,3 +506,11 @@ La prueba automatizada `tests/vue-build.test.mjs` genera una distribución aisla
 Prueba visual local conectada al Firebase actual: la sesión persistente abrió la compañía DEMO, cargó su ficha y mantuvo las acciones Ver/Editar. Una vista local aislada recorrió el mapa Vue, abrió Planeación, avanzó a la segunda actividad y cambió a Recursos y requisitos; se mostraron las nueve actividades, pestañas, tarjetas y navegación esperadas. No se desplegó Hosting, no se enviaron cambios a GitHub y no se modificaron reglas, Functions ni datos.
 
 En Gestión de Producción se retiraron las dos notas editoriales sobre la discrepancia entre nombres/códigos del archivo y sobre las secciones ausentes de la caracterización. La compilación local y las pruebas Vue aprobaron; una búsqueda sobre fuente y distribución confirmó que los textos ya no están presentes. El cambio permanece únicamente en local.
+
+### 9 de octubre de 2026 · Primeros módulos Vue nativos
+
+El inicio de sesión dejó de depender de `web/landing.js`: `AuthLanding.vue` administra con estado reactivo el acceso por correo o Google, registro, verificación, recuperación de contraseña, ficha del usuario, persistencia de sesión y redirección a la aplicación. Conserva los mismos identificadores de controles para mantener accesibilidad y permitir pruebas de regresión.
+
+El índice del mapa dejó de cargar el script clásico de su portada. `ProcessMap.vue` contiene los tres grupos y las nueve rutas de procesos como datos Vue y genera sus tarjetas de forma declarativa. Las caracterizaciones conservan temporalmente sus scripts actuales detrás de las páginas Vue generadas; esta separación permite migrarlas individualmente sin perder contenido.
+
+La compilación conectada al proyecto actual abrió una sesión persistente y cargó la compañía DEMO. La vista aislada del mapa mostró los nueve procesos y abrió Planeación con sus pestañas y actividades. Diez pruebas automatizadas aprobaron, incluyendo controles del landing, rutas del mapa, páginas de caracterización y ausencia de los puentes clásicos en los dos módulos convertidos. No se desplegó Firebase, no se envió a GitHub y no se modificaron reglas, Functions ni datos.
