@@ -534,3 +534,9 @@ La prueba local con Administrador DEMO cargó la ficha `999000001`, abrió Ver e
 El inicio Google de la migración Vue distinguió los dos entornos. En `localhost` y `127.0.0.1` usa `signInWithPopup`, alternativa indicada por Firebase cuando la aplicación se sirve fuera de Firebase Hosting y el dominio local no publica las rutas auxiliares `__/auth/*`. En `sigmyp.web.app` conserva `signInWithRedirect`, el flujo ya configurado y validado para el dominio público.
 
 La compilación y las pruebas principales confirmaron que ambos recorridos permanecen incluidos. No se cerró la sesión local existente para evitar interrumpir el trabajo ni se efectuó un acceso con una cuenta real durante la validación. No se desplegó Firebase ni se envió a GitHub.
+
+### 9 de octubre de 2026 · Guardado de Datos de empresa en Vue
+
+Se corrigió el puente entre `CompanyProfile.vue` y la operación auditada existente. Las acciones Ver y Editar se capturan por delegación desde el documento, por lo que continúan funcionando cuando Vue vuelve a dibujar la fila. El estado del guardado se localiza mediante `#company-profile-status`; esto evita que una referencia expuesta por el componente impida iniciar la transacción y garantiza que los errores se muestren dentro del modal.
+
+La verificación local conectada al proyecto actual abrió la ficha DEMO `999000001`, cargó sus campos, envió el formulario con los mismos valores y mostró «Datos de la empresa guardados.». La tabla conservó la razón social, NIT y correo después de recargar los datos. La operación produjo una actualización auditada sin cambiar el contenido funcional. Las pruebas automatizadas y la compilación aprobaron. El cambio permanece local: no se desplegó Firebase Hosting ni se envió a GitHub.

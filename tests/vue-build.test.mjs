@@ -39,11 +39,12 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
   const currentApp = await readFile(join(project, 'web/app.html'), 'utf8');
   const generatedApp = await readFile(join(project, 'vue/src/generated/AppShell.vue'), 'utf8');
   assert.deepEqual(ids(generatedApp), ids(currentApp), 'la plantilla Vue debe conservar todos los controles identificados');
-  const [appMain, appHeader, companyChooser, companyProfile] = await Promise.all([
+  const [appMain, appHeader, companyChooser, companyProfile, companyBridge] = await Promise.all([
     readFile(join(project, 'vue/src/app-main.js'), 'utf8'),
     readFile(join(project, 'vue/src/components/app/AppHeader.vue'), 'utf8'),
     readFile(join(project, 'vue/src/components/app/CompanyChooser.vue'), 'utf8'),
-    readFile(join(project, 'vue/src/components/company/CompanyProfile.vue'), 'utf8')
+    readFile(join(project, 'vue/src/components/company/CompanyProfile.vue'), 'utf8'),
+    readFile(join(project, 'web/profiles.js'), 'utf8')
   ]);
   assert.match(appMain, /createApp\(AppHeader\)/);
   assert.match(appMain, /createApp\(CompanyChooser\)/);
@@ -52,8 +53,12 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
   for (const id of ['company','identity'])
     assert.match(companyChooser, new RegExp(`id="${id}"`), `el selector Vue debe conservar ${id}`);
   assert.match(appMain, /createApp\(CompanyProfile\)/);
-  for (const id of ['profile-status','tax-form','company-profile-dialog-title'])
+  for (const id of ['profile-status','tax-form','company-profile-dialog-title','company-profile-status'])
     assert.match(companyProfile, new RegExp(`id="${id}"`), `los datos de empresa Vue deben conservar ${id}`);
+  for (const action of ['view','edit'])
+    assert.match(companyProfile, new RegExp(`data-company-profile-action="${action}"`), `la ficha Vue debe exponer la acción ${action}`);
+  assert.match(companyBridge, /document\.addEventListener\('click'/, 'el puente debe conservar acciones tras un nuevo render de Vue');
+  assert.match(companyBridge, /company-profile-status/, 'el guardado debe mostrar confirmación o error en el modal Vue');
 
   const sourcePages = (await readdir(join(project, 'web/process-map'))).filter(file => file.endsWith('.html')).sort();
   const builtPages = (await readdir(join(output, 'procesos'))).filter(file => file.endsWith('.html')).sort();

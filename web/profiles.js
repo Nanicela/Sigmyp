@@ -19,11 +19,26 @@ export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
   const companyForm = document.querySelector('#tax-form'), customerForm = root.querySelector('#customer-form');
   const customerModal=modal('Cliente',customerForm,{onClose:()=>resetCustomer()});
   const vueCompany=window.__sigmypCompanyProfile;
-  const companyModal=vueCompany||modal('Datos de empresa',companyForm);
+  const vueCompanyDialog=document.querySelector('#company-profile-dialog-title')?.closest('dialog');
+  const openVueCompany=edit=>{
+    const viewer=vueCompanyDialog.querySelector('[data-company-profile-view]'),heading=vueCompanyDialog.querySelector('#company-profile-dialog-title');
+    viewer.style.display=edit?'none':'';companyForm.style.display=edit?'':'none';
+    heading.textContent=edit?(profile?'Editar datos de empresa':'Completar datos de empresa'):(profile?.name||'Datos de empresa');
+    document.querySelector('#company-profile-status').textContent='';
+    if(!vueCompanyDialog.open)vueCompanyDialog.showModal();
+  };
+  const companyModal=vueCompany?{
+    get status(){return document.querySelector('#company-profile-status');},
+    close(){if(vueCompanyDialog.open)vueCompanyDialog.close();},
+    openView(){openVueCompany(false);},openEdit(){openVueCompany(true);}
+  }:modal('Datos de empresa',companyForm);
   const companyList=vueCompany?null:node('div');
   if(companyList)root.querySelector('[data-view="empresa"]').append(companyList);
   function renderCompany(){const actions=node('div','','row-actions');
-    if(vueCompany){vueCompany.render({company,profile,loading,canEdit:['platform','admin'].includes(getRole())});return;}
+    if(vueCompany){
+      vueCompany.render({company,profile,loading,canEdit:['platform','admin'].includes(getRole())});
+      return;
+    }
     actions.append(action('Ver empresa',()=>showCompany(false)));
     if(['platform','admin'].includes(getRole()))actions.append(action(profile?'Editar':'Completar datos',()=>showCompany(true)));
     table(companyList,['Empresa','NIT','Correo','Acciones'],company?[[profile?.name||'Ficha pendiente',company,profile?.email||'—',actions]]:[],'Datos de empresa');}
@@ -32,8 +47,10 @@ export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
     if(vueCompany){companyModal.openView();return;}
     details(profile?.name||'Empresa',[['Identificación',company],['Nombre',profile?.name],['Correo',profile?.email],['Teléfono',profile?.phone],['Dirección',profile?.address],['Departamento',profile?.department],['Municipio',profile?.municipality],['Responsabilidades',profile?.taxResponsibilities],['Condición IVA',profile?.vatStatus]]);
   }
-  const companyAction=event=>showCompany(event.detail==='edit');
-  if(vueCompany)window.addEventListener('sigmyp:company-profile-action',companyAction);
+  if(vueCompany)document.addEventListener('click',event=>{
+    const button=event.target.closest('[data-company-profile-action]');
+    if(button)showCompany(button.dataset.companyProfileAction==='edit');
+  });
   const chooser = document.querySelector('#customer-picker');
   const directory=createCustomerList(root.querySelector('#customer-list'),{onEdit:c=>{
     editing=c.id;fields(customerForm,c);customerForm.hidden=false;customerForm.elements.documentType.disabled=true;customerForm.elements.identification.readOnly=true;customerForm.querySelector('[type=submit]').textContent='Guardar cambios del cliente';customerModal.open('Editar cliente');customerForm.elements.name.focus();
@@ -84,8 +101,12 @@ export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
       e.preventDefault(); if (loading || !company) return;
       const isCompany = form === companyForm, current = epoch, base = path();
       const data = Object.fromEntries(new FormData(form)); data.documentType = form.elements.documentType.value;
-      const button = form.querySelector('[type=submit]'); button.disabled = true;const feedback=isCompany?companyModal.status:customerModal.status;feedback.textContent='Guardando…';
+      const button = form.querySelector('[type=submit]');
+      const feedback=isCompany?(document.querySelector('#company-profile-status')||companyModal.status):customerModal.status;
+      button.disabled = true;
       try {
+        if(!feedback)throw new Error('No pudimos preparar el guardado. Cierra el formulario y vuelve a abrirlo.');
+        feedback.textContent='Guardando…';
         const value = normalizeProfile(data), id = isCompany ? 'tax' : `${value.documentType}_${value.identification}`;
         const ref = doc(db,...base,isCompany?'profiles':'customers',id);
         const previous = isCompany ? profile : customers.find(c => c.id === editing);
@@ -98,7 +119,7 @@ export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
         if (current !== epoch) return;
         await load(company,companyForm.elements.name.value);
         message(isCompany?'Datos de la empresa guardados.':'Cliente guardado.');
-      } catch(e) { if (current === epoch) {feedback.textContent=e.message;message(e.message,true);} }
+      } catch(e) { if (current === epoch) {if(feedback)feedback.textContent=e.message;message(e.message,true);} }
       finally { button.disabled = false; }
     };
   }
