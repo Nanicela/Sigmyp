@@ -37,6 +37,17 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
   const currentApp = await readFile(join(project, 'web/app.html'), 'utf8');
   const generatedApp = await readFile(join(project, 'vue/src/generated/AppShell.vue'), 'utf8');
   assert.deepEqual(ids(generatedApp), ids(currentApp), 'la plantilla Vue debe conservar todos los controles identificados');
+  const [appMain, appHeader, companyChooser] = await Promise.all([
+    readFile(join(project, 'vue/src/app-main.js'), 'utf8'),
+    readFile(join(project, 'vue/src/components/app/AppHeader.vue'), 'utf8'),
+    readFile(join(project, 'vue/src/components/app/CompanyChooser.vue'), 'utf8')
+  ]);
+  assert.match(appMain, /createApp\(AppHeader\)/);
+  assert.match(appMain, /createApp\(CompanyChooser\)/);
+  for (const id of ['account-actions','account-trigger','account-menu','account-profile','account-company','account-users','logout'])
+    assert.match(appHeader, new RegExp(`id="${id}"`), `el encabezado Vue debe conservar ${id}`);
+  for (const id of ['company','identity'])
+    assert.match(companyChooser, new RegExp(`id="${id}"`), `el selector Vue debe conservar ${id}`);
 
   const sourcePages = (await readdir(join(project, 'web/process-map'))).filter(file => file.endsWith('.html')).sort();
   const builtPages = (await readdir(join(output, 'procesos'))).filter(file => file.endsWith('.html')).sort();

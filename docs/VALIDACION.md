@@ -514,3 +514,11 @@ El inicio de sesión dejó de depender de `web/landing.js`: `AuthLanding.vue` ad
 El índice del mapa dejó de cargar el script clásico de su portada. `ProcessMap.vue` contiene los tres grupos y las nueve rutas de procesos como datos Vue y genera sus tarjetas de forma declarativa. Las caracterizaciones conservan temporalmente sus scripts actuales detrás de las páginas Vue generadas; esta separación permite migrarlas individualmente sin perder contenido.
 
 La compilación conectada al proyecto actual abrió una sesión persistente y cargó la compañía DEMO. La vista aislada del mapa mostró los nueve procesos y abrió Planeación con sus pestañas y actividades. Diez pruebas automatizadas aprobaron, incluyendo controles del landing, rutas del mapa, páginas de caracterización y ausencia de los puentes clásicos en los dos módulos convertidos. No se desplegó Firebase, no se envió a GitHub y no se modificaron reglas, Functions ni datos.
+
+### 9 de octubre de 2026 · Cabecera, cuenta y compañía en Vue
+
+`AppHeader.vue` reemplaza en ejecución la cabecera generada y administra el desplegable de cuenta. Vue controla apertura, cierre al hacer clic fuera, cierre con Escape, estado `aria-expanded` y foco inicial. Las acciones Mi perfil, Datos de la empresa, Usuarios y permisos y Cerrar sesión conservan sus permisos y operaciones actuales.
+
+`CompanyChooser.vue` conserva el selector compartido por la navegación y la carga de datos. La sesión Administrador de DEMO recuperó automáticamente su única compañía (`999000001`), mostró el nombre actualizado y limitó el alcance a esa empresa. El menú mostró nombre, correo y «Rol · Administrador» junto con las tres acciones autorizadas; Escape lo cerró y devolvió `aria-expanded` a `false`. La consola no registró errores.
+
+La compilación y las pruebas principales aprobaron. Este corte permanece local: no se desplegó Firebase, no se envió a GitHub y no se modificaron datos, reglas ni Functions.

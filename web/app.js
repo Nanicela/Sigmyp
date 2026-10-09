@@ -115,7 +115,11 @@ const history = setupHistory({getCollection: id => draftsCollection(id), unpack:
 setupSidebar();
 const navigation = setupNavigation();
 const accountMenu = $('#account-menu');
-function closeAccountMenu(){accountMenu.hidden=true;$('#account-trigger').setAttribute('aria-expanded','false');}
+const vueAccountMenu = $('#account-actions').dataset.vueAccountMenu === 'true';
+function closeAccountMenu(){
+  if(vueAccountMenu){window.dispatchEvent(new Event('sigmyp:account-close'));return;}
+  accountMenu.hidden=true;$('#account-trigger').setAttribute('aria-expanded','false');
+}
 function openAccountMenu(){accountMenu.hidden=false;$('#account-trigger').setAttribute('aria-expanded','true');accountMenu.querySelector('[role="menuitem"]:not([hidden])')?.focus();}
 function renderAccountMenu(){
   const visible=!!user,role=currentRole(),company=$('#company').value;
@@ -145,12 +149,14 @@ function showMyProfile(){
     profileModal.dialog.insertBefore(back,profileModal.status);
   }
 }
-$('#account-trigger').onclick=()=>accountMenu.hidden?openAccountMenu():closeAccountMenu();
+if(!vueAccountMenu)$('#account-trigger').onclick=()=>accountMenu.hidden?openAccountMenu():closeAccountMenu();
 $('#account-profile').onclick=showMyProfile;
 $('#account-company').onclick=()=>accountRoute('empresa');
 $('#account-users').onclick=()=>accountRoute('usuarios');
-document.addEventListener('click',event=>{if(!$('#account-actions').contains(event.target))closeAccountMenu();});
-document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!accountMenu.hidden){closeAccountMenu();$('#account-trigger').focus();}});
+if(!vueAccountMenu){
+  document.addEventListener('click',event=>{if(!$('#account-actions').contains(event.target))closeAccountMenu();});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!accountMenu.hidden){closeAccountMenu();$('#account-trigger').focus();}});
+}
 const draftContent=node('div');for(const id of ['edit-notice','cancel-edit','draft-form'])draftContent.append($('#'+id));
 const draftModal=modal('Documento',draftContent);
 const companyModal=modal('Registrar empresa',$('#company-form'));
