@@ -115,7 +115,7 @@ export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
       contacts=contactDocs.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>a.name.localeCompare(b.name,'es'));
       sites=siteDocs.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>a.name.localeCompare(b.name,'es'));render();
       root.querySelector('#profile-status').textContent = profile ? 'Datos guardados. Puedes actualizarlos aquí.' : 'Completa los datos de esta empresa según su RUT.';
-      companyForm.querySelector('fieldset').disabled = !['platform','admin'].includes(getRole()); customerForm.querySelector('fieldset').disabled = !['platform','admin','billing'].includes(getRole()); root.querySelector('#new-customer').hidden = getRole() === 'viewer'; loading = false;renderCompany();
+      companyForm.querySelector('fieldset').disabled = !['platform','admin'].includes(getRole()); customerForm.querySelector('fieldset').disabled = !['platform','admin','billing'].includes(getRole()); root.querySelector('#new-customer').hidden = getRole() === 'viewer'; loading = false;render();renderCompany();
     } catch(e) { if (current === epoch) { loading = false; message('No pudimos cargar los datos: '+e.message,true); } }
   }
   for (const form of [companyForm,customerForm]) {

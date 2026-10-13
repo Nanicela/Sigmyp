@@ -563,6 +563,8 @@ Las reglas nuevas permiten lectura a miembros de la compañía y restringen alta
 
 La distribución local `dist-cloud` quedó reconstruida para `localhost:5504`. Las reglas nuevas no se publicaron, por lo que la versión conectada al proyecto real conserva lectura de clientes pero el guardado de contactos/sedes se prueba únicamente con emuladores hasta una autorización posterior. No se modificaron datos reales ni se envió a GitHub.
 
+La comprobación visual en `127.0.0.1:5500` inició sesión como Administrador ficticio, abrió Clientes desde el menú del usuario y mostró el cliente sembrado en la tabla. Su ficha permitió crear «Contacto de prueba» y «Sede Bogotá»; ambos registros aparecieron de inmediato en las tablas relacionadas con correo, teléfono, cargo y ubicación correctos. Los datos existen únicamente en el emulador.
+
 ### 13 de octubre de 2026 · Retención operativa por año
 
 Se definió que las consultas y colecciones transaccionales trabajen con el año calendario vigente en la zona horaria de Colombia. Los datos maestros —empresas, usuarios, clientes, contactos, sedes, proveedores, catálogos, configuraciones y activos— continúan entre años. Los documentos contables, fiscales y sus soportes no se eliminan: se trasladarán a un archivo histórico íntegro y restaurable antes de retirar el periodo de la base operativa.
