@@ -451,8 +451,12 @@ else { addLine(); start().catch(e => {
 }); }
 
 async function loadUserRegistry(){
- const token=await getIdTokenResult(user);const panel=$('#registered-users');panel.hidden=token.claims.platformAdmin!==true;if(panel.hidden)return;
+ const token=await getIdTokenResult(user),visible=token.claims.platformAdmin===true;
+ if(!visible){access?.renderRegistered([],false);return;}
  const snapshot=await getDocs(query(collection(db,'registeredUsers'),orderBy('createdAt','desc'),limit(100)));
+ const records=snapshot.docs.map(record=>({...record.data(),id:record.id}));
+ if(window.__sigmypUserAccess){access?.renderRegistered(records,true);return;}
+ const panel=$('#registered-users');panel.hidden=false;
  const list=$('#registered-users-list');list.replaceChildren();
- table(list,['Nombre','Correo','Identificación','Acciones'],snapshot.docs.map(record=>{const p=record.data();return [p.firstName+' '+p.lastName,p.email,p.documentType+' '+p.identification,action('Ver ficha',()=>details('Ficha de usuario',[['Nombre',p.firstName+' '+p.lastName],['Correo',p.email],['Documento',p.documentType+' '+p.identification],['Teléfono',p.phone],['Cargo',p.jobTitle]]))];}),'Usuarios registrados');
+ table(list,['Nombre','Correo','Identificación','Acciones'],records.map(p=>[p.firstName+' '+p.lastName,p.email,p.documentType+' '+p.identification,action('Ver ficha',()=>details('Ficha de usuario',[['Nombre',p.firstName+' '+p.lastName],['Correo',p.email],['Documento',p.documentType+' '+p.identification],['Teléfono',p.phone],['Cargo',p.jobTitle]]))]),'Usuarios registrados');
 }

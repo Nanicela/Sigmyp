@@ -39,12 +39,14 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
   const currentApp = await readFile(join(project, 'web/app.html'), 'utf8');
   const generatedApp = await readFile(join(project, 'vue/src/generated/AppShell.vue'), 'utf8');
   assert.deepEqual(ids(generatedApp), ids(currentApp), 'la plantilla Vue debe conservar todos los controles identificados');
-  const [appMain, appHeader, companyChooser, companyProfile, companyBridge] = await Promise.all([
+  const [appMain, appHeader, companyChooser, companyProfile, companyBridge, userAccess, accessBridge] = await Promise.all([
     readFile(join(project, 'vue/src/app-main.js'), 'utf8'),
     readFile(join(project, 'vue/src/components/app/AppHeader.vue'), 'utf8'),
     readFile(join(project, 'vue/src/components/app/CompanyChooser.vue'), 'utf8'),
     readFile(join(project, 'vue/src/components/company/CompanyProfile.vue'), 'utf8'),
-    readFile(join(project, 'web/profiles.js'), 'utf8')
+    readFile(join(project, 'web/profiles.js'), 'utf8'),
+    readFile(join(project, 'vue/src/components/users/UserAccess.vue'), 'utf8'),
+    readFile(join(project, 'web/access.js'), 'utf8')
   ]);
   assert.match(appMain, /createApp\(AppHeader\)/);
   assert.match(appMain, /createApp\(CompanyChooser\)/);
@@ -59,6 +61,13 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
     assert.match(companyProfile, new RegExp(`data-company-profile-action="${action}"`), `la ficha Vue debe exponer la acción ${action}`);
   assert.match(companyBridge, /document\.addEventListener\('click'/, 'el puente debe conservar acciones tras un nuevo render de Vue');
   assert.match(companyBridge, /company-profile-status/, 'el guardado debe mostrar confirmación o error en el modal Vue');
+  assert.match(appMain, /createApp\(UserAccess\)/);
+  for (const id of ['registered-users','registered-users-list','access-list','access-form','user-access-dialog-title','user-access-status'])
+    assert.match(userAccess, new RegExp(`id="${id}"`), `usuarios y permisos Vue debe conservar ${id}`);
+  for (const action of ['assign','view','edit','remove','registered-view','close'])
+    assert.match(userAccess, new RegExp(`data-user-access-action="${action}"`), `usuarios y permisos Vue debe exponer ${action}`);
+  assert.match(accessBridge, /window\.__sigmypUserAccess/);
+  assert.match(accessBridge, /renderRegistered/);
 
   const sourcePages = (await readdir(join(project, 'web/process-map'))).filter(file => file.endsWith('.html')).sort();
   const builtPages = (await readdir(join(output, 'procesos'))).filter(file => file.endsWith('.html')).sort();
