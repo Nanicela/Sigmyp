@@ -554,3 +554,17 @@ Se inventariaron de forma segura los recorridos del SIGMYP anterior: 44 modelos,
 `docs/MODERNIZACION_SIGMYP.md` define la arquitectura, el orden de los módulos, las convenciones de datos, los permisos y la estrategia incremental. `module-catalog.js` convierte ese orden en una definición compartida por Vue, dejando DIAN como última etapa. El store de aplicación ya dispone de los campos y operaciones para centralizar usuario, compañía activa, rol y permisos sin cambiar todavía los puentes que consumen Firebase.
 
 Las pruebas de dominio y de compilación Vue aprobaron: 2 archivos de prueba, 0 fallos. La compilación aislada recorrió las entradas, los controles migrados y las páginas de procesos. No se desplegó Firebase, no se envió a GitHub y no se modificaron reglas, Functions ni datos reales.
+
+### 13 de octubre de 2026 · Clientes, contactos y sedes en Vue
+
+`CustomerDirectory.vue` reemplaza el directorio clásico por una tabla Vue con búsqueda y acciones Ver/Editar. La ficha del cliente muestra sus datos tributarios y abre dos relaciones nuevas: personas de contacto y sedes. Cada relación tiene tabla, alta y edición modal, estado activo, aislamiento por compañía y auditoría. Clientes quedó disponible desde el menú de la cuenta; Facturación y Productos continúan ocultos.
+
+Las reglas nuevas permiten lectura a miembros de la compañía y restringen altas/ediciones de contactos y sedes a Administrador o Superadministrador. Impiden cambiar el cliente relacionado, exigen que ese cliente exista y requieren el evento de auditoría atómico. La suite de seguridad aprobó 16 pruebas, incluida creación, edición, aislamiento y rechazo de Consulta y Acceso anterior. La compilación Vue y las pruebas de dominio aprobaron 11 pruebas adicionales.
+
+La distribución local `dist-cloud` quedó reconstruida para `localhost:5504`. Las reglas nuevas no se publicaron, por lo que la versión conectada al proyecto real conserva lectura de clientes pero el guardado de contactos/sedes se prueba únicamente con emuladores hasta una autorización posterior. No se modificaron datos reales ni se envió a GitHub.
+
+### 13 de octubre de 2026 · Retención operativa por año
+
+Se definió que las consultas y colecciones transaccionales trabajen con el año calendario vigente en la zona horaria de Colombia. Los datos maestros —empresas, usuarios, clientes, contactos, sedes, proveedores, catálogos, configuraciones y activos— continúan entre años. Los documentos contables, fiscales y sus soportes no se eliminan: se trasladarán a un archivo histórico íntegro y restaurable antes de retirar el periodo de la base operativa.
+
+`business-year.js` calcula el año y sus límites en `America/Bogota`; la prueba cubre el cambio exacto de año entre UTC y Colombia para evitar filtros incorrectos. `RETENCION_DATOS.md` documenta cierre, conciliación, manifiesto, huella, restauración y aprobación. No se ejecutó ninguna eliminación o migración de datos reales.

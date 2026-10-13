@@ -129,6 +129,7 @@ function renderAccountMenu(){
   const initials=fullName.split(/\s+/).filter(Boolean).slice(0,2).map(value=>value[0]).join('').toUpperCase()||'US';
   $('#account-initials').textContent=initials;$('#account-name').textContent=fullName;$('#account-email').textContent=user.email||'';$('#account-role').textContent='Rol · '+(roleLabels[role]||'Sin rol asignado');
   $('#account-company').hidden=!company;
+  $('#account-customers').hidden=!company;
   $('#account-users').hidden=!company||!['platform','admin'].includes(role);
 }
 function accountRoute(route){closeAccountMenu();if(location.hash.slice(1)===route)navigation.update({signedIn:!!user,spark,admin:platform,role:currentRole(),companyStatus});else location.hash=route;}
@@ -152,6 +153,7 @@ function showMyProfile(){
 if(!vueAccountMenu)$('#account-trigger').onclick=()=>accountMenu.hidden?openAccountMenu():closeAccountMenu();
 $('#account-profile').onclick=showMyProfile;
 $('#account-company').onclick=()=>accountRoute('empresa');
+$('#account-customers').onclick=()=>accountRoute('clientes');
 $('#account-users').onclick=()=>accountRoute('usuarios');
 if(!vueAccountMenu){
   document.addEventListener('click',event=>{if(!$('#account-actions').contains(event.target))closeAccountMenu();});

@@ -10,6 +10,7 @@ Construir con Vue 3 y Firebase un sistema integrado de gestión para varias comp
 - Desarrollar localmente conectado a Firebase real cuando las reglas publicadas sean compatibles. Usar emuladores para pruebas y datos ficticios. Publicar solo por petición expresa.
 - Solo superadministradora puede acceder a varias compañías. Administrador, facturador y consulta pertenecen a una sola, seleccionada automáticamente.
 - Mantener la integración DIAN para la última etapa; preparar desde ahora los datos y límites entre componentes que necesitará.
+- Mantener en la base operativa solamente las transacciones del año calendario vigente. Conservar datos maestros entre años y archivar la historia legal/contable antes de retirar cualquier periodo, según [RETENCION_DATOS.md](RETENCION_DATOS.md).
 - El alcance incluye los módulos observados en el SIGMYP anterior: comercial, compras, inventario, producción, soporte/activos, finanzas e indicadores. Nómina, bancos y contabilidad de doble partida requieren una definición independiente.
 - Se asumen diez compañías iniciales. Volumen mensual, concurrencia, presupuesto operativo y fecha objetivo siguen por definir; no bloquean el siguiente incremento local.
 - La interfaz se migra a Vue 3 y Vite sin cambiar colecciones, reglas ni datos. Durante la transición se conserva una capa de compatibilidad con la lógica validada; cada módulo se reemplazará de forma gradual y solo se retirará esa capa cuando exista paridad demostrada.
@@ -20,7 +21,7 @@ Construir con Vue 3 y Firebase un sistema integrado de gestión para varias comp
 |---|---|---|
 | Firebase y publicación | Authentication, Firestore y Hosting en facturacion-electronica-a73e3 | Cloud Functions no desplegadas; Spark |
 | Usuarios y acceso | Registro de ficha, correo/contraseña, recuperación y sesión persistente; roles y compañía única publicados | Revisar permisos al incorporar cada operación |
-| Compañías y clientes | Fichas, edición, listado/modal y selección de cliente en documentos publicados | Validaciones tributarias y catálogos oficiales incompletos |
+| Compañías y clientes | Fichas y edición existentes; nuevo directorio Vue con búsqueda, contactos y sedes terminado localmente | Reglas de contactos/sedes validadas en emulador, aún sin publicar; validaciones tributarias oficiales incompletas |
 | Documentos | Borradores de factura y notas, edición permitida según bloqueo, historial, filtros, tabla y vista visual publicados | Sin emisión fiscal; notas no liquidan saldos |
 | Cálculos | Resumen en vivo, centavos enteros, validación de importes y reintentos | COP, hasta tres conceptos, IVA 5/19; sin descuentos ni retenciones |
 | Catálogo | Crear/editar/buscar/desactivar y selección en conceptos publicados el 2026-10-02 | Reglas y Hosting publicados; sin existencias |

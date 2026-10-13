@@ -14,7 +14,7 @@ export function auditedSet(tx, db, ref, before, values, auditId = crypto.randomU
   });
   return after;
 }
-const fieldNames={schemaVersion:'Versión del modelo',context:'Datos históricos de empresa y cliente',payment:'Condiciones de pago',code:'Código',description:'Descripción',type:'Tipo',priceCents:'Precio antes de IVA',rate:'IVA (%)',active:'Activo',name:'Nombre',nit:'NIT',members:'Accesos por correo',buyer:'Comprador',lines:'Conceptos',kind:'Tipo de documento',reference_id:'Factura de referencia',reason:'Motivo',currency:'Moneda',subtotalCents:'Subtotal',taxCents:'IVA',totalCents:'Total',status:'Estado',fiscal_validity:'Validez fiscal',referenceLocked:'Bloqueo por notas asociadas',documentType:'Tipo de identificación',identification:'Identificación',dv:'Dígito de verificación',email:'Correo',phone:'Teléfono',address:'Dirección',department:'Departamento',municipality:'Municipio',taxResponsibilities:'Responsabilidades tributarias',vatStatus:'Condición frente al IVA'};
+const fieldNames={schemaVersion:'Versión del modelo',context:'Datos históricos de empresa y cliente',payment:'Condiciones de pago',code:'Código',description:'Descripción',type:'Tipo',priceCents:'Precio antes de IVA',rate:'IVA (%)',active:'Activo',name:'Nombre',nit:'NIT',members:'Accesos por correo',buyer:'Comprador',customerId:'Cliente relacionado',jobTitle:'Cargo',lines:'Conceptos',kind:'Tipo de documento',reference_id:'Factura de referencia',reason:'Motivo',currency:'Moneda',subtotalCents:'Subtotal',taxCents:'IVA',totalCents:'Total',status:'Estado',fiscal_validity:'Validez fiscal',referenceLocked:'Bloqueo por notas asociadas',documentType:'Tipo de identificación',identification:'Identificación',dv:'Dígito de verificación',email:'Correo',phone:'Teléfono',address:'Dirección',department:'Departamento',municipality:'Municipio',taxResponsibilities:'Responsabilidades tributarias',vatStatus:'Condición frente al IVA'};
 function readable(key,value){
  if(value===undefined||value===null)return 'Sin valor anterior';
  if(key.endsWith('Cents'))return (value/100).toLocaleString('es-CO',{style:'currency',currency:'COP'});
@@ -28,7 +28,7 @@ function readable(key,value){
 export function setupAudit({db,getCompany,message}) {
   const dialog=document.querySelector('#audit-dialog'), list=document.querySelector('#audit-events'), more=document.querySelector('#audit-more');
   let cursor=null,company='',epoch=0,rows=[];
-  const labels={company:'Empresa y permisos',drafts:'Borrador',profiles:'Datos tributarios',customers:'Comprador',products:'Producto o servicio'};
+  const labels={company:'Empresa y permisos',drafts:'Borrador',profiles:'Datos tributarios',customers:'Cliente',customerContacts:'Contacto de cliente',customerSites:'Sede de cliente',products:'Producto o servicio'};
   async function page() {
     const current=epoch;more.disabled=true;
     try {

@@ -13,6 +13,8 @@ La modernización debe conservar cuatro condiciones ya acordadas:
 - todas las operaciones relevantes quedan atribuidas a un usuario y registradas en auditoría;
 - la integración y habilitación DIAN se aborda al final, cuando los módulos internos estén estables.
 
+La base operativa usa únicamente el año calendario vigente para las transacciones. Los datos maestros continúan entre años y los registros históricos sujetos a conservación se trasladan a un archivo verificable, conforme a [RETENCION_DATOS.md](RETENCION_DATOS.md).
+
 ## Alcance funcional
 
 | Área | Referencia anterior | Versión mejorada en SIGMYP | Orden |
@@ -70,6 +72,8 @@ Los nombres son el diseño de referencia. Cada colección se activa solamente cu
 ## Convenciones de datos
 
 Todo registro operativo nuevo debe incluir `schemaVersion`, `companyId`, estado, fecha de creación, fecha de actualización, usuario creador y usuario que hizo el último cambio. Las fechas de negocio, como vencimiento o fecha de entrega, se guardan separadas de los instantes de auditoría.
+
+Las transacciones también incluyen `businessYear`, derivado de su fecha de negocio en la zona horaria de Colombia. Las consultas operativas exigen ese campo para recuperar solo el año vigente y evitar lecturas completas de periodos anteriores.
 
 Las operaciones deben seguir estas reglas:
 

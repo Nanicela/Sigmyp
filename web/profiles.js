@@ -13,11 +13,30 @@ export function normalizeProfile(input) {
   if (!['responsable','no_responsable','por_confirmar'].includes(p.vatStatus)) throw new Error('Selecciona la condición frente al IVA.');
   return p;
 }
+export function normalizeCustomerContact(input,customerId) {
+  const value={customerId,name:String(input.name||'').trim(),jobTitle:String(input.jobTitle||'').trim(),email:String(input.email||'').trim().toLowerCase(),phone:String(input.phone||'').trim(),active:input.active===true||input.active==='on'};
+  if(!customerId||!value.name||value.name.length>150||value.jobTitle.length>100||value.phone.length>30)throw Error('Completa correctamente los datos del contacto.');
+  if(value.email&&(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.email)||value.email.length>254))throw Error('Revisa el correo electrónico del contacto.');
+  if(!value.email&&!value.phone)throw Error('Registra al menos un correo o teléfono para el contacto.');
+  return value;
+}
+export function normalizeCustomerSite(input,customerId) {
+  const value={customerId,name:String(input.name||'').trim(),address:String(input.address||'').trim(),department:String(input.department||'').trim(),municipality:String(input.municipality||'').trim(),phone:String(input.phone||'').trim(),active:input.active===true||input.active==='on'};
+  const limits={name:150,address:250,department:100,municipality:100,phone:30};
+  for(const [key,max] of Object.entries(limits))if((key!=='phone'&&!value[key])||value[key].length>max)throw Error('Completa correctamente los datos de la sede.');
+  return value;
+}
 export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
   const root = document.querySelector('#profiles');
-  let company = '', epoch = 0, customers = [], editing = '', profile = null, loading = false;
+  let company = '', companyName='', epoch = 0, customers = [], contacts=[], sites=[], editing = '', profile = null, loading = false;
   const companyForm = document.querySelector('#tax-form'), customerForm = root.querySelector('#customer-form');
-  const customerModal=modal('Cliente',customerForm,{onClose:()=>resetCustomer()});
+  const vueCustomer=window.__sigmypCustomerDirectory;
+  const customerDialog=customerForm.closest('dialog');
+  const customerModal=vueCustomer?{
+    get status(){return document.querySelector('#customer-status');},
+    close(){if(customerDialog?.open)customerDialog.close();resetCustomer();},
+    open(){vueCustomer.openCustomerEditor(editing?customers.find(customer=>customer.id===editing):null);}
+  }:modal('Cliente',customerForm,{onClose:()=>resetCustomer()});
   const vueCompany=window.__sigmypCompanyProfile;
   const vueCompanyDialog=document.querySelector('#company-profile-dialog-title')?.closest('dialog');
   const openVueCompany=edit=>{
@@ -52,9 +71,10 @@ export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
     if(button)showCompany(button.dataset.companyProfileAction==='edit');
   });
   const chooser = document.querySelector('#customer-picker');
-  const directory=createCustomerList(root.querySelector('#customer-list'),{onEdit:c=>{
+  const editCustomer=c=>{
     editing=c.id;fields(customerForm,c);customerForm.hidden=false;customerForm.elements.documentType.disabled=true;customerForm.elements.identification.readOnly=true;customerForm.querySelector('[type=submit]').textContent='Guardar cambios del cliente';customerModal.open('Editar cliente');customerForm.elements.name.focus();
-  }});
+  };
+  const directory=vueCustomer?{close:()=>vueCustomer.closeAll(),render:()=>vueCustomer.render({customers,contacts,sites,companyName,loading,canEdit:['platform','admin','billing'].includes(getRole())})}:createCustomerList(root.querySelector('#customer-list'),{onEdit:editCustomer});
   const path = () => ['organizations',company];
   function fields(form, data = {}) {
     form.reset();
@@ -68,7 +88,7 @@ export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
   }
   function render() {
     const selected=chooser.value;
-    const list = root.querySelector('#customer-list'); list.replaceChildren(); chooser.replaceChildren(new Option('Selecciona un cliente registrado',''));
+    const list = root.querySelector('#customer-list'); if(!vueCustomer)list.replaceChildren(); chooser.replaceChildren(new Option('Selecciona un cliente registrado',''));
     for (const c of customers) {
       chooser.add(new Option(`${c.name} · ${c.documentType} ${c.identification}`,c.id));
 
@@ -78,7 +98,7 @@ export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
   }
   async function load(id, name) {
     quickDialog.close();directory.close();customerModal.close();companyModal.close();
-    company = id; const current = ++epoch; profile = null; customers = []; loading=!!id;resetCustomer(); render();renderCompany();
+    company = id; companyName=name||''; const current = ++epoch; profile = null; customers = [];contacts=[];sites=[]; loading=!!id;resetCustomer(); render();renderCompany();
     root.hidden = !id; chooser.closest('label').hidden = !id;
     if (!id) return;
     fields(companyForm,{ name, documentType:'NIT',identification:id });
@@ -86,11 +106,14 @@ export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
     [companyForm,customerForm].forEach(f => f.querySelector('fieldset').disabled = true); loading = true;
     try {
       const base = path();
-      const [p,cs] = await Promise.all([getDoc(doc(db,...base,'profiles','tax')),getDocs(collection(db,...base,'customers'))]);
+      const optionalRelations=reference=>getDocs(reference).catch(error=>{if(error.code==='permission-denied')return{docs:[]};throw error;});
+      const [p,cs,contactDocs,siteDocs] = await Promise.all([getDoc(doc(db,...base,'profiles','tax')),getDocs(collection(db,...base,'customers')),optionalRelations(collection(db,...base,'customerContacts')),optionalRelations(collection(db,...base,'customerSites'))]);
       if (current !== epoch) return;
       profile = p.exists() ? p.data() : null;
       if (profile) fields(companyForm,profile);
       customers = cs.docs.map(d => ({...d.data(),id:d.id})).sort((a,b) => a.name.localeCompare(b.name,'es')); render();
+      contacts=contactDocs.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>a.name.localeCompare(b.name,'es'));
+      sites=siteDocs.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>a.name.localeCompare(b.name,'es'));render();
       root.querySelector('#profile-status').textContent = profile ? 'Datos guardados. Puedes actualizarlos aquí.' : 'Completa los datos de esta empresa según su RUT.';
       companyForm.querySelector('fieldset').disabled = !['platform','admin'].includes(getRole()); customerForm.querySelector('fieldset').disabled = !['platform','admin','billing'].includes(getRole()); root.querySelector('#new-customer').hidden = getRole() === 'viewer'; loading = false;renderCompany();
     } catch(e) { if (current === epoch) { loading = false; message('No pudimos cargar los datos: '+e.message,true); } }
@@ -123,7 +146,33 @@ export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
       finally { button.disabled = false; }
     };
   }
-  root.querySelector('#new-customer').onclick = ()=>{resetCustomer();customerForm.hidden=false;customerModal.open('Crear cliente');customerForm.elements.name.focus();};
+  if(vueCustomer){
+    const contactForm=document.querySelector('#customer-contact-form'),siteForm=document.querySelector('#customer-site-form');
+    const fillRelation=(form,value={})=>{form.reset();for(const [key,fieldValue]of Object.entries(value))if(form.elements[key]){if(form.elements[key].type==='checkbox')form.elements[key].checked=fieldValue!==false;else form.elements[key].value=fieldValue??'';}if(!value.id)form.elements.active.checked=true;};
+    document.addEventListener('sigmyp:customer-action',event=>{
+      const {action,customerId,relationId}=event.detail||{};const customer=customers.find(item=>item.id===customerId);
+      if(action==='new-customer'){resetCustomer();customerForm.hidden=false;customerModal.open();return;}
+      if(action==='edit-customer'&&customer){editCustomer(customer);return;}
+      if(!customer)return;
+      if(action==='new-contact'){fillRelation(contactForm);vueCustomer.openContactEditor();}
+      if(action==='edit-contact'){const contact=contacts.find(item=>item.id===relationId&&item.customerId===customerId);if(contact){fillRelation(contactForm,contact);vueCustomer.openContactEditor(contact);}}
+      if(action==='new-site'){fillRelation(siteForm);vueCustomer.openSiteEditor();}
+      if(action==='edit-site'){const site=sites.find(item=>item.id===relationId&&item.customerId===customerId);if(site){fillRelation(siteForm,site);vueCustomer.openSiteEditor(site);}}
+    });
+    const saveRelation=(form,collectionName,normalize,statusId)=>{
+      form.onsubmit=async event=>{event.preventDefault();if(loading||!company)return;
+        const activeCustomer=vueCustomer.selectedId();
+        const status=document.querySelector(statusId),button=form.querySelector('[type=submit]');button.disabled=true;status.textContent='Guardando…';
+        try{if(!activeCustomer)throw Error('Vuelve a abrir la ficha del cliente antes de guardar.');const input=Object.fromEntries(new FormData(form));input.active=form.elements.active.checked;const value=normalize(input,activeCustomer);const id=input.id||crypto.randomUUID(),ref=doc(db,...path(),collectionName,id),items=collectionName==='customerContacts'?contacts:sites,previous=items.find(item=>item.id===id);
+          await runTransaction(db,async tx=>{const old=await tx.get(ref);if(old.exists()&&!previous)throw Error('Este registro ya existe.');if(previous&&(!old.exists()||!old.data().updatedAt.isEqual(previous.updatedAt)))throw Error('El registro cambió en otra ventana. Recarga antes de editar.');auditedSet(tx,db,ref,old.exists()?old.data():null,{...value,createdAt:old.exists()?old.data().createdAt:serverTimestamp()});});
+          const saved=(await getDoc(ref)).data(),next={...saved,id};if(collectionName==='customerContacts')contacts=[...contacts.filter(item=>item.id!==id),next].sort((a,b)=>a.name.localeCompare(b.name,'es'));else sites=[...sites.filter(item=>item.id!==id),next].sort((a,b)=>a.name.localeCompare(b.name,'es'));render();form.closest('dialog').close();message(collectionName==='customerContacts'?'Contacto guardado.':'Sede guardada.');
+        }catch(error){status.textContent=error.message;message(error.message,true);}finally{button.disabled=false;}
+      };
+    };
+    saveRelation(contactForm,'customerContacts',normalizeCustomerContact,'#customer-contact-status');
+    saveRelation(siteForm,'customerSites',normalizeCustomerSite,'#customer-site-status');
+  }
+  if(!vueCustomer)root.querySelector('#new-customer').onclick = ()=>{resetCustomer();customerForm.hidden=false;customerModal.open('Crear cliente');customerForm.elements.name.focus();};
   chooser.onchange = () => { const c = customers.find(c => c.id === chooser.value); onBuyer(c || null); };
   const quickDialog=document.createElement('dialog');quickDialog.className='quick-customer-dialog';
   quickDialog.setAttribute('aria-labelledby','quick-customer-title');

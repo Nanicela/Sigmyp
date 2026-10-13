@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import domain from '../functions/domain.cjs';
+import {businessYear,businessYearBounds,isCurrentBusinessYear} from '../web/business-year.js';
 const line = { description: 'Servicio', quantity: '1', unit_price: '100000.00', iva_rate: '19' };
 test('IVA del 19 % y total conocido', () => {
   const result = domain.calculate([line]);
@@ -43,4 +44,13 @@ test('descuentos: límites, precisión y redondeo de centavos',()=>{
  for(const discount_rate of ['-1','100.01','1.001','','NaN','1e1',10])assert.throws(()=>domain.calculate([{...line,discount_rate}]));
  const r=domain.calculate([{...line,unit_price:'0.05',discount_rate:'10'}]);assert.equal(r.discount,'0.01');assert.equal(r.subtotal,'0.04');assert.equal(r.tax,'0.01');
  assert.equal(domain.calculate([{...line,discount_rate:'100'}]).total,'0.00');
+});
+test('periodo operativo usa el año vigente en Colombia sin dejarlo fijo',()=>{
+ assert.equal(businessYear('2027-01-01T04:30:00Z'),2026);
+ assert.equal(businessYear('2027-01-01T05:00:00Z'),2027);
+ const bounds=businessYearBounds(2027);
+ assert.equal(bounds.start.toISOString(),'2027-01-01T05:00:00.000Z');
+ assert.equal(bounds.end.toISOString(),'2028-01-01T05:00:00.000Z');
+ assert.equal(isCurrentBusinessYear('2026-06-01T12:00:00Z','2026-12-31T23:00:00Z'),true);
+ assert.equal(isCurrentBusinessYear('2025-12-31T23:59:59Z','2026-01-01T12:00:00Z'),false);
 });

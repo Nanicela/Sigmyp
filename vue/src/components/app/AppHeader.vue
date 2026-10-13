@@ -53,6 +53,7 @@ onBeforeUnmount(() => {
         <div class="account-summary"><strong id="account-name"></strong><span id="account-email"></span><small id="account-role"></small></div>
         <button id="account-profile" type="button" role="menuitem"><span class="account-menu-icon" aria-hidden="true">●</span><span><strong>Mi perfil</strong><small>Ver mi información personal</small></span></button>
         <button id="account-company" type="button" role="menuitem" hidden><span class="account-menu-icon" aria-hidden="true">▦</span><span><strong>Datos de la empresa</strong><small>Consultar la compañía activa</small></span></button>
+        <button id="account-customers" type="button" role="menuitem" hidden><span class="account-menu-icon" aria-hidden="true">◎</span><span><strong>Clientes</strong><small>Contactos y sedes</small></span></button>
         <button id="account-users" type="button" role="menuitem" hidden><span class="account-menu-icon" aria-hidden="true">⚙</span><span><strong>Usuarios y permisos</strong><small>Configurar accesos y roles</small></span></button>
         <button id="logout" type="button" role="menuitem" hidden><span class="account-menu-icon" aria-hidden="true">↪</span><span><strong>Cerrar sesión</strong><small>Salir de SIGMYP</small></span></button>
       </div>

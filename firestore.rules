@@ -170,7 +170,7 @@ service cloud.firestore {
           let e=request.resource.data;
           let path=targetPath(e);
           return registered() && e.keys().hasOnly(['target','targetId','actorUid','actorEmail','at','before','after']) &&
-          e.target in ['company','drafts','profiles','customers','products'] &&
+          e.target in ['company','drafts','profiles','customers','customerContacts','customerSites','products'] &&
           e.actorUid == request.auth.uid && e.actorEmail == request.auth.token.email && e.at == request.time &&
           e.after == getAfter(path).data &&
           e.after.auditId == eventId && e.after.updatedAt == request.time &&
@@ -251,6 +251,34 @@ service cloud.firestore {
         allow read: if orgAccess(companyId,['admin','billing','viewer']);
         allow create: if orgAccess(companyId,['admin','billing']) && exists(/databases/$(database)/documents/organizations/$(companyId)) && validProfile(request.resource.data) && id == request.resource.data.documentType + '_' + request.resource.data.identification && request.resource.data.createdAt == request.time && auditWrite(companyId,'customers',id,null);
         allow update: if orgAccess(companyId,['admin','billing']) && validProfile(request.resource.data) && profileChange() && auditWrite(companyId,'customers',id,resource.data);
+        allow delete: if false;
+      }
+      match /customerContacts/{id} {
+        function validContact(p) {
+          return p.keys().hasOnly(['customerId','name','jobTitle','email','phone','active','createdAt','updatedAt','version','auditId','updatedBy']) &&
+            p.customerId is string && p.customerId.matches('^(NIT|CC|CE)_[0-9]{5,15}$') &&
+            exists(/databases/$(database)/documents/organizations/$(companyId)/customers/$(p.customerId)) &&
+            shortText(p.name,150) && p.jobTitle is string && p.jobTitle.size() <= 100 &&
+            p.email is string && p.email.size() <= 254 && (p.email == '' || p.email.matches('^[^ @]+@[^ @]+[.][^ @]+$')) &&
+            p.phone is string && p.phone.size() <= 30 && (p.email.size() > 0 || p.phone.size() > 0) &&
+            p.active is bool && p.createdAt is timestamp;
+        }
+        allow read: if orgAccess(companyId,['admin','billing','viewer']);
+        allow create: if orgAccess(companyId,['admin']) && validContact(request.resource.data) && request.resource.data.createdAt == request.time && auditWrite(companyId,'customerContacts',id,null);
+        allow update: if orgAccess(companyId,['admin']) && validContact(request.resource.data) && request.resource.data.customerId == resource.data.customerId && request.resource.data.createdAt == resource.data.createdAt && auditWrite(companyId,'customerContacts',id,resource.data);
+        allow delete: if false;
+      }
+      match /customerSites/{id} {
+        function validSite(p) {
+          return p.keys().hasOnly(['customerId','name','address','department','municipality','phone','active','createdAt','updatedAt','version','auditId','updatedBy']) &&
+            p.customerId is string && p.customerId.matches('^(NIT|CC|CE)_[0-9]{5,15}$') &&
+            exists(/databases/$(database)/documents/organizations/$(companyId)/customers/$(p.customerId)) &&
+            shortText(p.name,150) && shortText(p.address,250) && shortText(p.department,100) && shortText(p.municipality,100) &&
+            p.phone is string && p.phone.size() <= 30 && p.active is bool && p.createdAt is timestamp;
+        }
+        allow read: if orgAccess(companyId,['admin','billing','viewer']);
+        allow create: if orgAccess(companyId,['admin']) && validSite(request.resource.data) && request.resource.data.createdAt == request.time && auditWrite(companyId,'customerSites',id,null);
+        allow update: if orgAccess(companyId,['admin']) && validSite(request.resource.data) && request.resource.data.customerId == resource.data.customerId && request.resource.data.createdAt == resource.data.createdAt && auditWrite(companyId,'customerSites',id,resource.data);
         allow delete: if false;
       }
     }

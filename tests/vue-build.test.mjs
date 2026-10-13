@@ -39,18 +39,20 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
   const currentApp = await readFile(join(project, 'web/app.html'), 'utf8');
   const generatedApp = await readFile(join(project, 'vue/src/generated/AppShell.vue'), 'utf8');
   assert.deepEqual(ids(generatedApp), ids(currentApp), 'la plantilla Vue debe conservar todos los controles identificados');
-  const [appMain, appHeader, companyChooser, companyProfile, companyBridge, userAccess, accessBridge] = await Promise.all([
+  const [appMain, appHeader, companyChooser, companyProfile, companyBridge, userAccess, accessBridge, customerDirectory, profileBridge] = await Promise.all([
     readFile(join(project, 'vue/src/app-main.js'), 'utf8'),
     readFile(join(project, 'vue/src/components/app/AppHeader.vue'), 'utf8'),
     readFile(join(project, 'vue/src/components/app/CompanyChooser.vue'), 'utf8'),
     readFile(join(project, 'vue/src/components/company/CompanyProfile.vue'), 'utf8'),
     readFile(join(project, 'web/profiles.js'), 'utf8'),
     readFile(join(project, 'vue/src/components/users/UserAccess.vue'), 'utf8'),
-    readFile(join(project, 'web/access.js'), 'utf8')
+    readFile(join(project, 'web/access.js'), 'utf8'),
+    readFile(join(project, 'vue/src/components/customers/CustomerDirectory.vue'), 'utf8'),
+    readFile(join(project, 'web/profiles.js'), 'utf8')
   ]);
   assert.match(appMain, /createApp\(AppHeader\)/);
   assert.match(appMain, /createApp\(CompanyChooser\)/);
-  for (const id of ['account-actions','account-trigger','account-menu','account-profile','account-company','account-users','logout'])
+  for (const id of ['account-actions','account-trigger','account-menu','account-profile','account-company','account-customers','account-users','logout'])
     assert.match(appHeader, new RegExp(`id="${id}"`), `el encabezado Vue debe conservar ${id}`);
   for (const id of ['company','identity'])
     assert.match(companyChooser, new RegExp(`id="${id}"`), `el selector Vue debe conservar ${id}`);
@@ -68,6 +70,13 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
     assert.match(userAccess, new RegExp(`data-user-access-action="${action}"`), `usuarios y permisos Vue debe exponer ${action}`);
   assert.match(accessBridge, /window\.__sigmypUserAccess/);
   assert.match(accessBridge, /renderRegistered/);
+  assert.match(appMain, /createApp\(CustomerDirectory\)/);
+  for (const id of ['customer-list','new-customer','customer-form','customer-contact-form','customer-site-form'])
+    assert.match(customerDirectory, new RegExp(`id="${id}"`), `clientes Vue debe conservar ${id}`);
+  assert.match(customerDirectory, /Contactos/);
+  assert.match(customerDirectory, /Sedes/);
+  assert.match(profileBridge, /customerContacts/);
+  assert.match(profileBridge, /customerSites/);
 
   const [applicationStore, moduleCatalog] = await Promise.all([
     readFile(join(project, 'vue/src/stores/application.js'), 'utf8'),

@@ -10,6 +10,7 @@ import {getFirestore,connectFirestoreEmulator,doc,getDoc,getDocs,collection,quer
 import {createSparkDraft,createSparkCompany} from '../web/spark.js';
 import {auditedSet} from '../web/audit.js';
 import {registerUserRecord} from '../web/user-record.js';
+import {normalizeCustomerContact,normalizeCustomerSite} from '../web/profiles.js';
 const require=createRequire(new URL('../functions/package.json',import.meta.url));
 const adminApp=require('firebase-admin/app'),adminAuth=require('firebase-admin/auth');
 let env,app,db,uid,admin;
@@ -84,6 +85,23 @@ test('datos tributarios y permisos requieren historial atómico',async()=>{
  const companyRef=doc(db,'organizations',company);
  await assertFails(updateDoc(companyRef,{members:{},updatedAt:serverTimestamp()}));
  await runTransaction(db,async tx=>{const old=(await tx.get(companyRef)).data();tx.set(doc(db,'companyAssignments','new@example.test'),{companyId:company});auditedSet(tx,db,companyRef,old,{...old,members:{...old.members,'new@example.test':'viewer'},memberChangeEmail:'new@example.test'});});
+});
+test('contactos y sedes de clientes conservan compañía, relación y auditoría',async()=>{
+ const customerId='CC_123456';
+ const contact=normalizeCustomerContact({name:'Laura Contacto',jobTitle:'Compras',email:'laura@example.test',phone:'3001234567',active:'on'},customerId);
+ const site=normalizeCustomerSite({name:'Sede principal',address:'Calle 10 # 20-30',department:'Bogotá D.C.',municipality:'Bogotá D.C.',phone:'6012345678',active:'on'},customerId);
+ assert.throws(()=>normalizeCustomerContact({name:'Sin medio'},customerId),/correo o teléfono/);
+ assert.throws(()=>normalizeCustomerSite({name:'Incompleta'},customerId),/sede/);
+ for(const [collectionName,id,value]of [['customerContacts','contacto-prueba',contact],['customerSites','sede-prueba',site]]){
+  const ref=doc(db,'organizations',company,collectionName,id);
+  await runTransaction(db,async tx=>{await tx.get(ref);auditedSet(tx,db,ref,null,{...value,createdAt:serverTimestamp()});});
+  const saved=(await getDoc(ref)).data();assert.equal(saved.customerId,customerId);assert.equal(saved.version,1);
+  await assertSucceeds(getDoc(doc(ctx('viewer'),ref.path)));
+  await assertFails(updateDoc(doc(ctx('viewer'),ref.path),{name:'Cambio'}));
+  await assertFails(updateDoc(doc(ctx('billing'),ref.path),{name:'Cambio'}));
+  await runTransaction(db,async tx=>{const old=(await tx.get(ref)).data();auditedSet(tx,db,ref,old,{...old,name:old.name+' editada'});});
+  assert.equal((await getDoc(ref)).data().version,2);
+ }
 });
 test('tres conceptos y actualización de importes sin superar límites de reglas',async()=>{
  const data=input();data.lines=Array.from({length:3},(_,i)=>({...data.lines[0],description:'Concepto '+i}));

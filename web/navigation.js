@@ -15,13 +15,13 @@ const views = {
 export function setupNavigation() {
   let signedIn = false, spark = false, admin = false, role = null, companyStatus='loading';
   const buttons = [...document.querySelectorAll('[data-route]')];
-  const paused = new Set(['documentos','nuevo','productos','clientes']);
+  const paused = new Set(['documentos','nuevo','productos']);
   const backToProcesses = document.querySelector('#back-to-processes');
   function dydIsActive() {
     const select = document.querySelector('#company');
     return isDydCompany(select.value);
   }
-  function available(key) { return signedIn && !paused.has(key) && (key === 'procesos' ? dydIsActive() : key === 'companias' ? admin : key === 'registrar' ? admin : !document.querySelector('#company').value ? false : key === 'usuarios' ? ['platform','admin'].includes(role) : key === 'empresa' ? spark && !!role : false); }
+  function available(key) { return signedIn && !paused.has(key) && (key === 'procesos' ? dydIsActive() : key === 'companias' ? admin : key === 'registrar' ? admin : !document.querySelector('#company').value ? false : key === 'usuarios' ? ['platform','admin'].includes(role) : ['empresa','clientes'].includes(key) ? spark && !!role : false); }
   function render() {
     const requested = location.hash.slice(1);
     const activeCompany=document.querySelector('#company').value;

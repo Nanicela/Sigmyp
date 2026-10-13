@@ -5,6 +5,7 @@ import AppHeader from './components/app/AppHeader.vue';
 import CompanyChooser from './components/app/CompanyChooser.vue';
 import CompanyProfile from './components/company/CompanyProfile.vue';
 import UserAccess from './components/users/UserAccess.vue';
+import CustomerDirectory from './components/customers/CustomerDirectory.vue';
 import { useApplicationStore } from './stores/application.js';
 
 const pinia = createPinia();
@@ -17,6 +18,7 @@ createApp(AppHeader).mount('main > header');
 createApp(CompanyChooser).mount('.company-bar');
 window.__sigmypCompanyProfile = createApp(CompanyProfile).mount('[data-view="empresa"]');
 window.__sigmypUserAccess = createApp(UserAccess).mount('[data-view="usuarios"]');
+window.__sigmypCustomerDirectory = createApp(CustomerDirectory).mount('[data-view="clientes"]');
 await nextTick();
 
 // Puente de compatibilidad: Vue renderiza la interfaz y la lógica existente
