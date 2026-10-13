@@ -546,3 +546,11 @@ La verificación local conectada al proyecto actual abrió la ficha DEMO `999000
 `UserAccess.vue` reemplaza la presentación anterior del módulo: genera la tabla de miembros de la compañía, las acciones Ver usuario, Editar rol y Retirar acceso, el modal para asignar permisos y el registro de usuarios disponible para Superadministrador. El componente conserva Administrador y Consulta como únicos roles asignables, presenta membresías antiguas `billing` como «Acceso anterior» y no permite editar ni retirar el acceso global protegido.
 
 La transacción Firestore permanece temporalmente en `web/access.js` para preservar la actualización atómica de `organizations/{nit}.members`, `companyAssignments/{email}` y auditoría. La comprobación local con DEMO mostró cuatro accesos, abrió la ficha de un usuario, cargó la edición con correo bloqueado y rol actual, y abrió la asignación con formulario limpio. No se enviaron formularios ni se modificaron permisos. La consola no registró errores; compilación y pruebas aprobaron. No se desplegó Firebase ni se envió a GitHub.
+
+### 13 de octubre de 2026 · Base para la modernización integral
+
+Se inventariaron de forma segura los recorridos del SIGMYP anterior: 44 modelos, 182 rutas y 201 recursos públicos distribuidos en plataforma, comercial, compras, inventario, producción, finanzas, soporte e indicadores. La copia local excluye configuración, credenciales, bases de datos, archivos subidos, respaldos, dependencias y compilados; permanece ignorada por Git y se utiliza únicamente como referencia funcional.
+
+`docs/MODERNIZACION_SIGMYP.md` define la arquitectura, el orden de los módulos, las convenciones de datos, los permisos y la estrategia incremental. `module-catalog.js` convierte ese orden en una definición compartida por Vue, dejando DIAN como última etapa. El store de aplicación ya dispone de los campos y operaciones para centralizar usuario, compañía activa, rol y permisos sin cambiar todavía los puentes que consumen Firebase.
+
+Las pruebas de dominio y de compilación Vue aprobaron: 2 archivos de prueba, 0 fallos. La compilación aislada recorrió las entradas, los controles migrados y las páginas de procesos. No se desplegó Firebase, no se envió a GitHub y no se modificaron reglas, Functions ni datos reales.

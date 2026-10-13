@@ -69,6 +69,18 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
   assert.match(accessBridge, /window\.__sigmypUserAccess/);
   assert.match(accessBridge, /renderRegistered/);
 
+  const [applicationStore, moduleCatalog] = await Promise.all([
+    readFile(join(project, 'vue/src/stores/application.js'), 'utf8'),
+    import(join(project, 'vue/src/domain/module-catalog.js'))
+  ]);
+  assert.match(applicationStore, /setSessionContext/);
+  assert.match(applicationStore, /activeCompanyId/);
+  assert.deepEqual(
+    moduleCatalog.moduleCatalog.map(module => module.id),
+    ['processes', 'company', 'access', 'crm', 'sales', 'purchases', 'inventory', 'production', 'support', 'finance', 'analytics', 'dian']
+  );
+  assert.equal(moduleCatalog.moduleById('dian').order, 9, 'DIAN debe permanecer como última etapa');
+
   const sourcePages = (await readdir(join(project, 'web/process-map'))).filter(file => file.endsWith('.html')).sort();
   const builtPages = (await readdir(join(output, 'procesos'))).filter(file => file.endsWith('.html')).sort();
   assert.deepEqual(builtPages, sourcePages);

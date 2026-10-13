@@ -1,16 +1,16 @@
 # Plan de construcción y habilitación
 
-Actualizado: 7 de octubre de 2026. Plan vigente; sustituye el orden del 28 de septiembre. Las evidencias de cada entrega están en [VALIDACION.md](VALIDACION.md).
+Actualizado: 13 de octubre de 2026. Plan vigente; sustituye el orden del 28 de septiembre. Las evidencias de cada entrega están en [VALIDACION.md](VALIDACION.md) y el diseño de la ampliación está en [MODERNIZACION_SIGMYP.md](MODERNIZACION_SIGMYP.md).
 
 ## Objetivo y decisiones
 
-Construir con Firebase un sistema de facturación para varias compañías, comenzando por facturas y notas crédito/débito, y preparar posteriormente el software y la empresa para el proceso oficial de proveedor tecnológico DIAN. La empresa está constituida y la usuaria declara cumplir requisitos patrimoniales; sus soportes no han sido auditados.
+Construir con Vue 3 y Firebase un sistema integrado de gestión para varias compañías. La versión nueva incorpora de manera gradual los recorridos útiles del SIGMYP anterior: clientes, cotizaciones, compras, inventario, producción, soporte, cartera e indicadores. Después se preparará el software y la empresa para el proceso oficial de proveedor tecnológico DIAN. La empresa está constituida y la usuaria declara cumplir requisitos patrimoniales; sus soportes no han sido auditados.
 
 - Mantener Spark por ahora. No activar facturación ni servicios de pago sin autorización.
 - Desarrollar localmente conectado a Firebase real cuando las reglas publicadas sean compatibles. Usar emuladores para pruebas y datos ficticios. Publicar solo por petición expresa.
 - Solo superadministradora puede acceder a varias compañías. Administrador, facturador y consulta pertenecen a una sola, seleccionada automáticamente.
 - Mantener la integración DIAN para la última etapa; preparar desde ahora los datos y límites entre componentes que necesitará.
-- El alcance de trabajo es facturación y, progresivamente, pagos/cartera. Contabilidad integral, inventario, compras, bancos, nómina y cuentas por pagar no quedan incluidos automáticamente.
+- El alcance incluye los módulos observados en el SIGMYP anterior: comercial, compras, inventario, producción, soporte/activos, finanzas e indicadores. Nómina, bancos y contabilidad de doble partida requieren una definición independiente.
 - Se asumen diez compañías iniciales. Volumen mensual, concurrencia, presupuesto operativo y fecha objetivo siguen por definir; no bloquean el siguiente incremento local.
 - La interfaz se migra a Vue 3 y Vite sin cambiar colecciones, reglas ni datos. Durante la transición se conserva una capa de compatibilidad con la lógica validada; cada módulo se reemplazará de forma gradual y solo se retirará esa capa cuando exista paridad demostrada.
 
@@ -28,6 +28,8 @@ Construir con Firebase un sistema de facturación para varias compañías, comen
 | Condiciones de pago | Contado/crédito, fecha, plazo, vencimiento y medio esperado publicados el 2026-10-05 | No registra pagos |
 | Pagos y cartera | Pendientes | Contado no equivale automáticamente a pagado |
 | DIAN | Pendiente | Sin XML fiscal, firma, CUFE/CUDE, numeración fiscal, transmisión ni habilitación |
+| Referencia SIGMYP anterior | Código seguro inventariado localmente: 44 modelos, 182 rutas y 201 recursos públicos | Se usa para comprender recorridos; no se copiarán su base de datos, secretos ni arquitectura antigua |
+| Migración Vue | Acceso, mapa, cabecera, selector de compañía, datos de empresa y usuarios/permisos migrados | Falta centralizar estado y migrar los módulos operativos |
 
 Los documentos actuales son borradores sin validez fiscal. La vista visual no equivale a PDF fiscal ni el guardado en Firestore a expedición de factura.
 
@@ -56,7 +58,23 @@ Los documentos actuales son borradores sin validez fiscal. La vista visual no eq
 
 **Criterio de terminación:** casos de cálculo documentados y revisados con contador, pruebas de combinaciones y redondeo, rechazo de importes manipulados y trazabilidad entre reglas de negocio, código y pruebas. Consultar fuentes oficiales vigentes al implementar tratamientos fiscales.
 
-### 3. Ajustes, pagos, abonos y cartera
+### 3. Datos maestros y operación comercial
+
+- Migrar Clientes a Vue e incorporar contactos y sedes.
+- Implementar cotizaciones, versiones, vigencia, estados y trazabilidad.
+- Incorporar proveedores, contactos y órdenes de compra con aprobación y recepción.
+
+**Criterio de terminación:** datos aislados por compañía, permisos por acción, estados auditados y recorridos completos en Vue.
+
+### 4. Inventario, producción y soporte
+
+- Diseñar ítems, categorías, ubicaciones, movimientos, existencias y seriales.
+- Incorporar productos, materiales, procesos, recursos, órdenes de producción y remisiones.
+- Incorporar activos instalados, casos de soporte, respuestas, soluciones y tiempos de atención.
+
+**Criterio de terminación:** movimientos y reversos consistentes, concurrencia probada, trazabilidad desde compra hasta consumo/entrega y tickets asociados a activos.
+
+### 5. Ajustes, pagos, abonos y cartera
 
 - Completar motivos, relación con factura origen y ajustes parciales/totales de notas. Distinguir preparar una nota de aplicar sus efectos económicos.
 - Crear pagos y aplicaciones de pagos como registros separados: fecha, importe, medio, referencia y usuario responsable.
@@ -65,7 +83,7 @@ Los documentos actuales son borradores sin validez fiscal. La vista visual no eq
 
 **Criterio de terminación:** pagos parciales y múltiples calculan saldos consistentes; reintentos no duplican abonos; ajustes no se aplican dos veces; reversos conservan historia; operaciones restringidas por rol y compañía. La expedición de notas fiscales sigue pendiente de la etapa DIAN.
 
-### 4. Consulta y operación cotidiana
+### 6. Consulta, indicadores y operación cotidiana
 
 - Consultas y exportaciones con filtros, paginación, vencimientos y saldos; representación imprimible coherente con las copias históricas.
 - Mejorar búsqueda, mensajes de error y estados vacíos según los flujos completados.
@@ -74,7 +92,7 @@ Los documentos actuales son borradores sin validez fiscal. La vista visual no eq
 
 **Criterio de terminación:** cada rol completa sus recorridos permitidos; exportaciones coinciden con datos/criterios consultados; pruebas de aislamiento, recuperación y errores documentadas. Ninguna salida se presenta como fiscal antes de implementar emisión.
 
-### 5. Integración DIAN y habilitación — última etapa
+### 7. Integración DIAN y habilitación — última etapa
 
 1. Verificar normativa y anexos oficiales vigentes, versiones y requisitos diferenciados para el software y la autorización de la empresa como proveedor tecnológico. Organizar matriz requisito → implementación → prueba → evidencia.
 2. Definir infraestructura y presupuesto del procesamiento seguro. Numeración atómica por compañía/tipo/ambiente, resolución y rangos cuando correspondan; no usar conteo de documentos ni inventar parámetros oficiales.
@@ -106,11 +124,9 @@ Datos futuros a diseñar antes de implementarlos: pagos y sus aplicaciones, seri
 
 La migración Vue está aislada en la rama local `migration/vue3`. Landing, aplicación, mapa y caracterizaciones ya son renderizados por Vue en la compilación local, conservando las rutas y controles existentes. La usuaria pidió probarla antes de publicarla: no se desplegará en Firebase ni se enviará a GitHub hasta una aprobación posterior expresa.
 
-El primer corte nativo ya reemplaza el código de interfaz del landing/autenticación y del índice del mapa por componentes Vue. El siguiente corte migrará la estructura autenticada y la selección de compañía; después se convertirán perfil de empresa, usuarios/permisos y cada caracterización. Cada corte debe conservar los identificadores, rutas, permisos y datos actuales, pasar la compilación y poder recorrerse localmente antes de retirar su módulo clásico.
+Los cortes nativos ya reemplazaron landing/autenticación, índice del mapa, cabecera, menú del usuario, selector de compañía, Datos de empresa y Usuarios/permisos por componentes Vue. La persistencia auditada continúa temporalmente en servicios existentes para no alterar reglas ni formatos durante la transición.
 
-El segundo corte ya componentizó la cabecera autenticada, el menú del usuario y el selector de compañía. El siguiente incremento debe convertir Datos de empresa y después Usuarios y permisos. La carga de compañías continúa usando el servicio actual durante esta transición; se trasladará a un store Vue cuando las dos pantallas administrativas consuman el mismo estado.
-
-Datos de empresa ya usa una tabla y modales Vue para consulta y edición. Su persistencia auditada continúa en el servicio existente para no alterar las reglas ni el formato de Firestore. El próximo corte es Usuarios y permisos; al completarlo, el estado compartido de compañía, rol y ficha podrá centralizarse en Pinia y se retirarán los puentes de estas pantallas administrativas.
+El próximo corte centraliza identidad, compañía, rol y permisos en Pinia y crea la base común de módulos. Después se migran Clientes, Contactos y Sedes a Vue; siguen Cotizaciones, Compras, Inventario, Producción y Soporte conforme a [MODERNIZACION_SIGMYP.md](MODERNIZACION_SIGMYP.md).
 
 La etapa 1 tiene una entrega parcial publicada y comprobada en emuladores: esquema histórico y condiciones de pago. La usuaria priorizó el motor de descuentos e impuestos; referencias/unidades de productos y separación de estados quedan pendientes. Pagos y aplicaciones siguen en la etapa 3. La usuaria reafirmó el 5 de octubre mantener DIAN al final. La entrega está publicada en https://sigmyp.web.app/ y dist-cloud actualizado para la vista local conectada a Firebase real. El puerto 5500 conserva el entorno de emuladores.
 
