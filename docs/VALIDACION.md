@@ -570,3 +570,9 @@ La comprobación visual en `127.0.0.1:5500` inició sesión como Administrador f
 Se definió que las consultas y colecciones transaccionales trabajen con el año calendario vigente en la zona horaria de Colombia. Los datos maestros —empresas, usuarios, clientes, contactos, sedes, proveedores, catálogos, configuraciones y activos— continúan entre años. Los documentos contables, fiscales y sus soportes no se eliminan: se trasladarán a un archivo histórico íntegro y restaurable antes de retirar el periodo de la base operativa.
 
 `business-year.js` calcula el año y sus límites en `America/Bogota`; la prueba cubre el cambio exacto de año entre UTC y Colombia para evitar filtros incorrectos. `RETENCION_DATOS.md` documenta cierre, conciliación, manifiesto, huella, restauración y aprobación. No se ejecutó ninguna eliminación o migración de datos reales.
+
+### 13 de octubre de 2026 · Logo SIGMYP definitivo
+
+Se reemplazó `web/logo-sigmyp.png` por el archivo correcto entregado por la usuaria, de 2083 × 755 píxeles y huella SHA-256 `4a6a8e7be5d915b46d657675e5e7b9dea319d883c3eeccb640881a68e6200d70`. La presentación dejó de usar el recorte vertical creado para el logo anterior y ahora conserva la imagen horizontal completa sobre fondo blanco en el acceso, la cabecera y la barra lateral.
+
+Las distribuciones locales para emuladores y conexión al proyecto actual se reconstruyeron. Las pruebas de dominio y compilación Vue aprobaron, y la revisión visual local confirmó el logo completo en la cabecera adaptable. No se desplegó Firebase ni se envió a GitHub.
