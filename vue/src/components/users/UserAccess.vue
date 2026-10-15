@@ -29,10 +29,19 @@ const members = computed(() => {
   }));
 });
 
-function render(payload = {}) { Object.assign(state,payload); }
+function render(payload = {}) { Object.assign(state,payload); window.dispatchEvent(new CustomEvent('sigmyp:workspace-data',{detail:{moduleId:'access'}})); }
 function renderRegistered(registeredUsers = [], visible = false) {
   state.registeredUsers = registeredUsers;
   state.registryVisible = visible;
+  window.dispatchEvent(new CustomEvent('sigmyp:workspace-data',{detail:{moduleId:'access'}}));
+}
+function snapshot() {
+  return {
+    company: state.company ? {...state.company, members:{...(state.company.members || {})}} : null,
+    effectiveRole: state.effectiveRole,
+    members: members.value.map(member => ({...member})),
+    canManage: canManage.value
+  };
 }
 function openEditor({email = '', role = '', edit = false} = {}) {
   mode.value='edit'; editing.value=edit;
@@ -43,7 +52,7 @@ function openEditor({email = '', role = '', edit = false} = {}) {
 function openDetails() { mode.value='view'; status.value.textContent=''; dialog.value.showModal(); }
 function close() { if (dialog.value?.open) dialog.value.close(); }
 
-defineExpose({render,renderRegistered,openEditor,openDetails,close,get status(){return status.value;}});
+defineExpose({render,renderRegistered,snapshot,openEditor,openDetails,close,get status(){return status.value;}});
 </script>
 
 <template>

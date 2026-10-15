@@ -12,13 +12,16 @@ const entries = computed(() => [
   ['Responsabilidades',state.profile?.taxResponsibilities],['Condición IVA',state.profile?.vatStatus]
 ]);
 
-function render(payload = {}) { Object.assign(state, payload); }
+function render(payload = {}) { Object.assign(state, payload); window.dispatchEvent(new CustomEvent('sigmyp:workspace-data',{detail:{moduleId:'company'}})); }
+function snapshot() {
+  return { company:state.company, profile:state.profile ? {...state.profile} : null, loading:state.loading, canEdit:state.canEdit };
+}
 function openView() { if (!state.company || state.loading) return; mode.value='view'; modalStatus.value.textContent=''; dialog.value.showModal(); }
 function openEdit() { if (!state.company || state.loading || !state.canEdit) return; mode.value='edit'; modalStatus.value.textContent=''; dialog.value.showModal(); }
 function close() { if (dialog.value?.open) dialog.value.close(); }
 function onDialogClick(event) { if (event.target === dialog.value) close(); }
 
-defineExpose({ render, openView, openEdit, close, get status(){ return modalStatus.value; } });
+defineExpose({ render, snapshot, openView, openEdit, close, get status(){ return modalStatus.value; } });
 onMounted(() => dialog.value.addEventListener('click',onDialogClick));
 onBeforeUnmount(() => dialog.value?.removeEventListener('click',onDialogClick));
 </script>

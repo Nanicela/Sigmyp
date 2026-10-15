@@ -105,6 +105,11 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
       assert.ok(processCatalog.processById(processId), `${module.id} debe apuntar a un proceso existente`);
   assert.match(processWorkspace, /target="_top"/);
   assert.match(processWorkspace, /modulesForProcess/);
+  assert.match(processWorkspace, /process-module-tabs/);
+  assert.match(processWorkspace, /role="tabpanel"/);
+  assert.match(processWorkspace, /activeData\.customers/);
+  for (const component of [companyProfile,userAccess,customerDirectory])
+    assert.match(component, /snapshot/, 'cada módulo visible en procesos debe exponer sus datos ya cargados desde Firebase');
 
   const sourcePages = (await readdir(join(project, 'web/process-map'))).filter(file => file.endsWith('.html')).sort();
   const builtPages = (await readdir(join(output, 'procesos'))).filter(file => file.endsWith('.html')).sort();

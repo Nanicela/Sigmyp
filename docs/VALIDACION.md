@@ -584,3 +584,9 @@ Firebase quedó ratificado como la única plataforma de datos de SIGMYP y Vue co
 En el estado actual, Planeación y direccionamiento ofrece Datos de empresa y Usuarios y permisos, mientras Gestión comercial ofrece Clientes, contactos y sedes. Los enlaces regresan a la aplicación principal conservando la compañía activa y el control de acceso. Compras, inventario, producción, soporte, finanzas, indicadores y DIAN ya tienen ubicación definida en el catálogo, pero no se muestran antes de estar listos.
 
 La distribución local conectada al proyecto Firebase actual y la distribución para emuladores compilaron correctamente. Las pruebas de dominio, catálogo, correspondencia de procesos, enlaces y compilación Vue aprobaron sin fallos. La sesión local disponible pertenecía a la compañía DEMO y el control vigente impidió abrir las caracterizaciones exclusivas de DyD, tal como corresponde. No se desplegó Firebase ni se envió a GitHub.
+
+#### Presentación de datos dentro de Gestión
+
+La pestaña Gestión dejó de presentar tarjetas que obligaban a salir del proceso. Ahora contiene subpestañas por módulo y tablas de consulta dentro de la misma caracterización. Planeación muestra la ficha de empresa y los usuarios con su rol y alcance; Comercial muestra clientes, identificación, contacto y cantidad de contactos/sedes relacionados.
+
+Los componentes `CompanyProfile`, `UserAccess` y `CustomerDirectory` exponen una copia de lectura de los datos que ya recibieron desde Firestore. `ProcessWorkspace` consume esas copias únicamente cuando está integrado en la aplicación del mismo origen y escucha actualizaciones del contexto. No se crea otra conexión ni otra base de datos. El enlace «Abrir gestión completa» conserva los formularios y permisos actuales para crear o editar. La compilación local y las pruebas Vue aprobaron sin fallos; el cambio permanece sin deploy y sin envío a GitHub.

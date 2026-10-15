@@ -15,8 +15,9 @@ async function openCustomerEditor(customer=null){selectedCustomerId.value=custom
 async function openContactEditor(contact=null){relationMode.value=contact?'edit':'create';contactDialog.value?.showModal();await nextTick();document.querySelector('#customer-contact-form [name="name"]')?.focus();}
 async function openSiteEditor(site=null){relationMode.value=site?'edit':'create';siteDialog.value?.showModal();await nextTick();document.querySelector('#customer-site-form [name="name"]')?.focus();}
 function closeAll(){for(const dialog of [detailDialog,customerDialog,contactDialog,siteDialog])if(dialog.value?.open)dialog.value.close();}
-function render(payload={}){customers.value=payload.customers||[];contacts.value=payload.contacts||[];sites.value=payload.sites||[];companyName.value=payload.companyName||'';canEdit.value=!!payload.canEdit;loading.value=!!payload.loading;if(selectedCustomerId.value&&!customers.value.some(customer=>customer.id===selectedCustomerId.value))closeAll();}
-defineExpose({render,openDetails,openCustomerEditor,openContactEditor,openSiteEditor,closeAll,selectedId:()=>selectedCustomerId.value});
+function render(payload={}){customers.value=payload.customers||[];contacts.value=payload.contacts||[];sites.value=payload.sites||[];companyName.value=payload.companyName||'';canEdit.value=!!payload.canEdit;loading.value=!!payload.loading;if(selectedCustomerId.value&&!customers.value.some(customer=>customer.id===selectedCustomerId.value))closeAll();window.dispatchEvent(new CustomEvent('sigmyp:workspace-data',{detail:{moduleId:'crm'}}));}
+function snapshot(){return {customers:customers.value.map(item=>({...item})),contacts:contacts.value.map(item=>({...item})),sites:sites.value.map(item=>({...item})),companyName:companyName.value,canEdit:canEdit.value,loading:loading.value};}
+defineExpose({render,snapshot,openDetails,openCustomerEditor,openContactEditor,openSiteEditor,closeAll,selectedId:()=>selectedCustomerId.value});
 </script>
 
 <template>

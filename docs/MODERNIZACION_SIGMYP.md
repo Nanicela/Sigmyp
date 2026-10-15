@@ -38,7 +38,7 @@ La interfaz se construye íntegramente con Vue 3, Vite y Pinia. Cada módulo deb
 
 Firebase es la plataforma de datos del proyecto: Authentication mantiene correo/contraseña y Google; Firestore conserva los datos separados por compañía; Cloud Functions ejecutará las transacciones que no deban confiarse al navegador; Storage guardará adjuntos cuando se habiliten. No se desarrollará una segunda base de datos paralela. Los datos que afecten existencias, saldos, aprobaciones o documentos fiscales necesitarán una operación confiable de servidor antes de entrar en producción; las reglas del navegador por sí solas no bastan para esos recorridos.
 
-El mapa de procesos es la navegación funcional principal. Cada proceso incorpora una pestaña **Gestión** cuando al menos una herramienta de ese proceso está disponible. Esa pestaña abre el módulo Vue correspondiente dentro de SIGMYP y respeta la compañía activa, el rol y los permisos. Los módulos planeados no aparecen hasta tener interfaz, esquema Firestore, reglas y pruebas aprobadas.
+El mapa de procesos es la navegación funcional principal. Cada proceso incorpora una pestaña **Gestión** cuando al menos una herramienta de ese proceso está disponible. Dentro de ella, cada módulo aparece como una subpestaña que presenta sus datos en tablas sin abandonar la caracterización. Los datos provienen del contexto Vue que la aplicación ya cargó desde Firestore, por lo que conservan compañía activa, rol y permisos; las altas y ediciones se abren mediante «Abrir gestión completa». Los módulos planeados no aparecen hasta tener interfaz, esquema Firestore, reglas y pruebas aprobadas.
 
 | Proceso | Herramientas asignadas |
 |---|---|
