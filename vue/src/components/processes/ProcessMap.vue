@@ -1,4 +1,6 @@
 <script setup>
+import { processGroups as groups } from '../../domain/process-catalog.js';
+
 const icons = {
   compass: '<circle class="icon-soft" cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="8.25"/><path class="icon-accent" d="m15.9 8.1-2.25 5.55-5.55 2.25 2.25-5.55z"/><path d="m15.9 8.1-2.25 5.55-5.55 2.25 2.25-5.55z"/>',
   cycle: '<circle class="icon-soft" cx="12" cy="12" r="9"/><path d="M5 9a7.5 7.5 0 0 1 12.7-2.3L20 9M20 5v4h-4M19 15a7.5 7.5 0 0 1-12.7 2.3L4 15M4 19v-4h4"/><path class="icon-accent" d="M12 8.7 13 11l2.3 1-2.3 1-1 2.3-1-2.3-2.3-1 2.3-1z"/>',
@@ -10,14 +12,6 @@ const icons = {
   shield: '<path class="icon-soft" d="m12 2.5 8 3.2v6.1c0 5.2-4.1 8.2-8 9.7-3.9-1.5-8-4.5-8-9.7V5.7z"/><path d="m12 2.5 8 3.2v6.1c0 5.2-4.1 8.2-8 9.7-3.9-1.5-8-4.5-8-9.7V5.7zM7.2 12h2.4l1.2-2.6 2.1 5.2 1.3-2.6h2.6"/>',
   chart: '<rect class="icon-soft" x="3" y="3" width="18" height="18" rx="4"/><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7 17v-3m5 3V9m5 8v-6M6.5 10.5 10 7l3 2 4.5-4"/><circle class="icon-accent" cx="17.5" cy="5" r="1.5"/>'
 };
-const groups = [
-  { number:'01', title:'Procesos estratégicos y de mejora continua', className:'strategic', nodesClass:'nodes-two', processes:[
-    {name:'Gestión de planeación y direccionamiento',href:'planeacion.html',icon:'compass'}, {name:'Gestión de mejora continua',href:'mejora-continua.html',icon:'cycle'} ]},
-  { number:'02', title:'Procesos misionales', className:'mission', nodesClass:'nodes-four', processes:[
-    {name:'Gestión comercial',href:'comercial.html',icon:'handshake'}, {name:'Gestión de Desarrollo',href:'desarrollo.html',icon:'layers'}, {name:'Gestión de Compras',href:'compras.html',icon:'bag'}, {name:'Gestión de Producción',href:'produccion.html',icon:'factory'} ]},
-  { number:'03', title:'Procesos de apoyo', className:'support', nodesClass:'nodes-three', processes:[
-    {name:'Gestión del Talento Humano',href:'talento-humano.html',icon:'people'}, {name:'SG-SST',href:'sg-sst.html',icon:'shield'}, {name:'Gestión Financiera',href:'financiera.html',icon:'chart'} ]}
-];
 </script>
 
 <template>

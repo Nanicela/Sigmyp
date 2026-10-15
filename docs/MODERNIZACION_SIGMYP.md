@@ -1,6 +1,6 @@
 # Modernización integral de SIGMYP
 
-Actualizado: 13 de octubre de 2026.
+Actualizado: 15 de octubre de 2026.
 
 ## Propósito
 
@@ -34,9 +34,23 @@ Nómina, bancos y contabilidad de doble partida no aparecen en el inventario fun
 
 ## Arquitectura objetivo
 
-La interfaz se construye con Vue 3, Vite y Pinia. Cada módulo debe tener componentes, estado y servicios propios. La capa JavaScript anterior se retirará por módulo después de comprobar paridad, sin hacer una sustitución total en un solo cambio.
+La interfaz se construye íntegramente con Vue 3, Vite y Pinia. Cada módulo debe tener componentes, estado y servicios propios. La capa JavaScript anterior se retirará por módulo después de comprobar paridad, sin hacer una sustitución total en un solo cambio.
 
-Firebase Authentication mantiene correo/contraseña y Google. Firestore conserva los datos separados por compañía. Los datos que afecten existencias, saldos, aprobaciones o documentos fiscales necesitarán una operación confiable de servidor antes de entrar en producción; las reglas del navegador por sí solas no bastan para esos recorridos.
+Firebase es la plataforma de datos del proyecto: Authentication mantiene correo/contraseña y Google; Firestore conserva los datos separados por compañía; Cloud Functions ejecutará las transacciones que no deban confiarse al navegador; Storage guardará adjuntos cuando se habiliten. No se desarrollará una segunda base de datos paralela. Los datos que afecten existencias, saldos, aprobaciones o documentos fiscales necesitarán una operación confiable de servidor antes de entrar en producción; las reglas del navegador por sí solas no bastan para esos recorridos.
+
+El mapa de procesos es la navegación funcional principal. Cada proceso incorpora una pestaña **Gestión** cuando al menos una herramienta de ese proceso está disponible. Esa pestaña abre el módulo Vue correspondiente dentro de SIGMYP y respeta la compañía activa, el rol y los permisos. Los módulos planeados no aparecen hasta tener interfaz, esquema Firestore, reglas y pruebas aprobadas.
+
+| Proceso | Herramientas asignadas |
+|---|---|
+| Planeación y direccionamiento | Datos de empresa; usuarios y permisos |
+| Mejora continua | Indicadores y tableros |
+| Comercial | Clientes, contactos, sedes, cotizaciones y soporte al cliente |
+| Desarrollo | Productos y definición técnica |
+| Compras | Proveedores, órdenes de compra e inventario recibido |
+| Producción | Inventario de operación, productos, materiales, órdenes y remisiones |
+| Talento humano | Se incorporará cuando se defina su alcance funcional |
+| SG-SST / recursos físicos | Activos y soporte de infraestructura |
+| Financiera | Facturación, pagos, cartera y, al final, integración DIAN |
 
 Estructura conceptual:
 

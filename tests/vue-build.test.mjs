@@ -78,9 +78,11 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
   assert.match(profileBridge, /customerContacts/);
   assert.match(profileBridge, /customerSites/);
 
-  const [applicationStore, moduleCatalog] = await Promise.all([
+  const [applicationStore, moduleCatalog, processCatalog, processWorkspace] = await Promise.all([
     readFile(join(project, 'vue/src/stores/application.js'), 'utf8'),
-    import(join(project, 'vue/src/domain/module-catalog.js'))
+    import(join(project, 'vue/src/domain/module-catalog.js')),
+    import(join(project, 'vue/src/domain/process-catalog.js')),
+    readFile(join(project, 'vue/src/components/processes/ProcessWorkspace.vue'), 'utf8')
   ]);
   assert.match(applicationStore, /setSessionContext/);
   assert.match(applicationStore, /activeCompanyId/);
@@ -89,6 +91,20 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
     ['processes', 'company', 'access', 'crm', 'sales', 'purchases', 'inventory', 'production', 'support', 'finance', 'analytics', 'dian']
   );
   assert.equal(moduleCatalog.moduleById('dian').order, 9, 'DIAN debe permanecer como última etapa');
+  assert.deepEqual(moduleCatalog.modulesForProcess('comercial').map(module => module.id), ['crm']);
+  assert.deepEqual(moduleCatalog.modulesForProcess('planeacion').map(module => module.id), ['company', 'access']);
+  assert.deepEqual(moduleCatalog.modulesForProcess('financiera').map(module => module.id), [], 'los módulos planeados todavía no deben mostrarse');
+  assert.deepEqual(
+    moduleCatalog.modulesForProcess('financiera', { includePlanned: true }).map(module => module.id),
+    ['finance', 'dian'],
+    'Finanzas y DIAN deben permanecer ubicados en Gestión Financiera'
+  );
+  assert.equal(processCatalog.processes.length, 9);
+  for (const module of moduleCatalog.moduleCatalog)
+    for (const processId of module.processIds)
+      assert.ok(processCatalog.processById(processId), `${module.id} debe apuntar a un proceso existente`);
+  assert.match(processWorkspace, /target="_top"/);
+  assert.match(processWorkspace, /modulesForProcess/);
 
   const sourcePages = (await readdir(join(project, 'web/process-map'))).filter(file => file.endsWith('.html')).sort();
   const builtPages = (await readdir(join(output, 'procesos'))).filter(file => file.endsWith('.html')).sort();
@@ -106,8 +122,12 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
 
   const processMap = await readFile(join(project, 'vue/src/components/processes/ProcessMap.vue'), 'utf8');
   for (const page of ['planeacion','mejora-continua','comercial','desarrollo','compras','produccion','talento-humano','sg-sst','financiera'])
-    assert.match(processMap, new RegExp(`href:'${page}\\.html'`), `el mapa Vue debe conservar ${page}`);
-  assert.match(await readFile(join(project, 'vue/src/process-main.js'), 'utf8'), /file === 'index\.html' \? \[\] : page\.scripts/);
+    assert.ok(processCatalog.processByFile(`${page}.html`), `el catálogo Vue debe conservar ${page}`);
+  assert.match(processMap, /processGroups as groups/);
+  const processMain = await readFile(join(project, 'vue/src/process-main.js'), 'utf8');
+  assert.match(processMain, /file === 'index\.html' \? \[\] : page\.scripts/);
+  assert.match(processMain, /createApp\(ProcessWorkspace/);
+  assert.match(processMain, /tab-operation/);
 
   assert.equal(JSON.parse(await readFile(join(output, 'firebase-config.json'), 'utf8')).firebase.projectId, 'demo-facturacion');
 });

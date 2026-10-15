@@ -576,3 +576,11 @@ Se definió que las consultas y colecciones transaccionales trabajen con el año
 Se reemplazó `web/logo-sigmyp.png` por el archivo correcto entregado por la usuaria, de 2083 × 755 píxeles y huella SHA-256 `4a6a8e7be5d915b46d657675e5e7b9dea319d883c3eeccb640881a68e6200d70`. La presentación dejó de usar el recorte vertical creado para el logo anterior y ahora conserva la imagen horizontal completa sobre fondo blanco en el acceso, la cabecera y la barra lateral.
 
 Las distribuciones locales para emuladores y conexión al proyecto actual se reconstruyeron. Las pruebas de dominio y compilación Vue aprobaron, y la revisión visual local confirmó el logo completo en la cabecera adaptable. No se desplegó Firebase ni se envió a GitHub.
+
+### 15 de octubre de 2026 · Módulos Vue dentro del mapa de procesos
+
+Firebase quedó ratificado como la única plataforma de datos de SIGMYP y Vue como tecnología de toda la interfaz final. Se creó un catálogo único de los nueve procesos y se vinculó cada módulo con el proceso donde se utiliza. Las caracterizaciones incorporan automáticamente una pestaña «Gestión» únicamente cuando existe una herramienta activa o en migración; los módulos planeados permanecen ocultos hasta completar su interfaz, esquema Firestore, reglas y pruebas.
+
+En el estado actual, Planeación y direccionamiento ofrece Datos de empresa y Usuarios y permisos, mientras Gestión comercial ofrece Clientes, contactos y sedes. Los enlaces regresan a la aplicación principal conservando la compañía activa y el control de acceso. Compras, inventario, producción, soporte, finanzas, indicadores y DIAN ya tienen ubicación definida en el catálogo, pero no se muestran antes de estar listos.
+
+La distribución local conectada al proyecto Firebase actual y la distribución para emuladores compilaron correctamente. Las pruebas de dominio, catálogo, correspondencia de procesos, enlaces y compilación Vue aprobaron sin fallos. La sesión local disponible pertenecía a la compañía DEMO y el control vigente impidió abrir las caracterizaciones exclusivas de DyD, tal como corresponde. No se desplegó Firebase ni se envió a GitHub.
