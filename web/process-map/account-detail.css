@@ -1,0 +1,247 @@
+dialog.sigmyp-account-dialog{box-sizing:border-box;width:min(1560px,96vw);max-width:96vw;max-height:90vh;margin:auto;padding:0;border:1px solid #d8d1d5;border-radius:16px;background:#fff;color:#282429;box-shadow:0 20px 65px #29232933;overflow:auto;font:14px/1.5 Arial,sans-serif}
+.sigmyp-account-dialog::backdrop{background:rgba(35,25,30,.38);backdrop-filter:blur(3px)}
+.sigmyp-account-dialog *{box-sizing:border-box}
+.sigmyp-account-dialog .sigmyp-account-header{position:sticky;top:0;z-index:1;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:20px 24px;border-bottom:1px solid #ded8dc;background:#fff}
+.sigmyp-account-header p{margin:0 0 4px;color:#800030;font-size:11px;font-weight:700;letter-spacing:.12em}
+.sigmyp-account-header h2{margin:0;font-size:23px;overflow-wrap:anywhere}
+.sigmyp-account-dialog .sigmyp-account-close{flex-shrink:0;margin:0;padding:9px 14px;border:1px solid #d4c6cd;border-radius:7px;background:#fff;color:#800030;font:inherit;cursor:pointer}
+.sigmyp-account-layout{display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,2.5fr);gap:24px;padding:24px;align-items:start}
+.sigmyp-account-dialog h3{margin:0;padding:13px 16px;border-bottom:1px solid #e3dce0;background:rgba(128,0,48,.04);font-size:16px;color:#332b30}
+.sigmyp-account-dialog h3 span{font-size:12px;margin-left:8px;color:#800030}
+.sigmyp-account-profile,.sigmyp-account-related section{min-width:0;border:1px solid #ded8dc;border-radius:10px;overflow:hidden;background:white}
+.sigmyp-account-profile dl{margin:0;padding:6px 16px}
+.sigmyp-account-profile dl>div{padding:10px 0;border-bottom:1px solid #eee9ec}
+.sigmyp-account-profile dl>div:last-child{border:0}
+.sigmyp-account-profile dt{font-size:12px;color:#70656c}
+.sigmyp-account-profile dd{margin:3px 0 0;font-weight:500;overflow-wrap:anywhere;white-space:pre-wrap}
+.sigmyp-account-related{display:grid;gap:24px;min-width:0}
+.sigmyp-account-table-scroll{max-width:100%;overflow-x:auto}
+.sigmyp-account-dialog table{width:100%;border-collapse:collapse;font-size:13px;text-align:left}
+.sigmyp-account-dialog th{background:#f7f5f6;color:#4f424a;font-size:12px;font-weight:600}
+.sigmyp-account-dialog td,.sigmyp-account-dialog th{padding:11px 14px;border-bottom:1px solid #eee9ec;vertical-align:top;min-width:115px;max-width:280px;overflow-wrap:anywhere;white-space:normal}
+.sigmyp-account-dialog tr:last-child td{border-bottom:0}
+.sigmyp-account-empty{margin:0;padding:20px;color:#766a71}
+.sigmyp-account-dialog :focus-visible{outline:2px solid #800030;outline-offset:-3px}
+@media(max-width:900px){.sigmyp-account-layout{grid-template-columns:1fr;padding:16px;gap:16px}.sigmyp-account-profile dl{display:grid;grid-template-columns:1fr 1fr;gap:0 20px}.sigmyp-account-header h2{font-size:19px}}
+@media(max-width:500px){.sigmyp-account-profile dl{grid-template-columns:1fr}.sigmyp-account-dialog .sigmyp-account-header{padding:14px;gap:10px}}
+
+dialog.sigmyp-contact-dialog{width:min(780px,96vw)}
+.sigmyp-contact-content{padding:24px}
+.sigmyp-contact-dialog .sigmyp-account-profile dl{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+.sigmyp-contact-comments{grid-column:1/-1}
+@media(max-width:600px){.sigmyp-contact-content{padding:16px}.sigmyp-contact-dialog .sigmyp-account-profile dl{grid-template-columns:1fr}}
+
+.sigmyp-account-form{padding:16px}.sigmyp-account-form fieldset{border:0;margin:0;padding:0;min-width:0}
+.sigmyp-account-form label{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;font-size:12px;color:#5f5159}
+.sigmyp-account-form input,.sigmyp-account-form select{width:100%;min-width:0;min-height:38px;padding:8px;border:1px solid #cfc7cb;border-radius:6px;background:white;color:#282429;font:14px Arial,sans-serif}
+.sigmyp-account-edit-actions{display:flex;gap:10px;flex-wrap:wrap;padding:16px}
+.sigmyp-account-form .sigmyp-account-edit-actions{padding:8px 0}
+.sigmyp-account-edit-actions button{padding:10px 14px;border-radius:6px;border:1px solid #800030;background:#800030;color:white;cursor:pointer;font:14px Arial,sans-serif}
+.sigmyp-account-edit-actions button+button{background:white;color:#800030}
+.sigmyp-account-save-status{padding:0 16px 16px;margin:0;color:#800030}
+.sigmyp-account-dialog button:disabled{opacity:.55;cursor:wait}
+
+.sigmyp-account-create-layout{grid-template-columns:minmax(0,760px);justify-content:center}
+
+/* Keep account actions visible while only the details scroll. */
+dialog.sigmyp-editable-account-dialog[open]{display:flex;flex-direction:column;overflow:hidden}
+.sigmyp-editable-account-dialog .sigmyp-account-header{position:static;flex-shrink:0}
+.sigmyp-editable-account-dialog .sigmyp-account-layout{min-height:0;overflow:auto;overscroll-behavior:contain}
+.sigmyp-account-footer{flex-shrink:0;border-top:1px solid #ded8dc;background:#fff;padding:12px 24px}
+.sigmyp-account-footer .sigmyp-account-edit-actions{justify-content:flex-end;padding:0}
+.sigmyp-account-footer p{margin:0 0 10px;color:#70656c;font-size:13px}
+.sigmyp-account-footer button:disabled{cursor:not-allowed}
+@media(max-width:500px){.sigmyp-account-footer{padding:12px 14px}}
+
+dialog.sigmyp-account-success{box-sizing:border-box;width:min(420px,92vw);max-height:90vh;overflow:auto;margin:auto;padding:30px 24px;border:1px solid #86c99d;border-radius:16px;background:#f0fdf4;color:#14532d;text-align:center;box-shadow:0 20px 65px #153d2633;font:15px/1.5 Arial,sans-serif}
+.sigmyp-account-success::backdrop{background:#18291f66}
+.sigmyp-account-success-icon{display:inline-grid;place-items:center;width:56px;height:56px;border-radius:50%;background:#dcfce7;color:#15803d;font-size:32px;font-weight:bold}
+.sigmyp-account-success h2{margin:14px 0 8px;font-size:23px;color:#14532d}
+.sigmyp-account-success p{margin:0 0 24px}
+.sigmyp-account-success button{min-width:120px;padding:11px 24px;border:0;border-radius:8px;background:#15803d;color:white;font:600 15px Arial,sans-serif;cursor:pointer}
+.sigmyp-account-success button:focus-visible{outline:3px solid #166534;outline-offset:3px}
+
+.sigmyp-record-scroll{min-height:0;overflow:auto;overscroll-behavior:contain}
+.sigmyp-account-form textarea{width:100%;padding:8px;border:1px solid #cfc7cb;border-radius:6px;font:14px Arial,sans-serif;resize:vertical}
+
+.quotation-fields,.quotation-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px 20px}.quotation-lines input{min-width:100px}.quotation-lines td:first-child{min-width:260px}.quotation-totals{text-align:right;padding:15px 0;color:#800030}.quotation-summary dd{margin:4px 0}
+
+/* Commercial quotation: information at left, products and preserved totals at right. */
+.quotation-overview{display:grid;grid-template-columns:minmax(280px,1fr) minmax(0,2fr);gap:22px;align-items:start}
+.quotation-information,.quotation-products{min-width:0;border:1px solid #ded8dc;border-radius:10px;overflow:hidden;background:#fff}
+.quotation-information dl{margin:0;padding:6px 18px}
+.quotation-information dl>div{padding:10px 0;border-bottom:1px solid #eee9ec}
+.quotation-information dt{font-size:12px;color:#70656c}
+.quotation-information dd{margin:4px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.quotation-status{display:inline-block;border-radius:5px;padding:3px 9px;background:#8000300d;color:#800030;font-weight:600}
+.quotation-reference{margin:16px;color:#756971;font-size:12px}
+.quotation-total-card{margin:20px 18px 18px auto;max-width:360px;padding:16px;background:#80003008;border:1px solid #e4dce0;border-radius:10px}
+.quotation-total-card>div{display:flex;justify-content:space-between;gap:20px;padding:8px 0}.quotation-total-card dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+.quotation-total-card .quotation-grand-total{border-top:1px solid #d5c5cd;margin-top:8px;padding-top:16px;color:#800030;font-size:20px;font-weight:700}
+.quotation-products td:nth-child(2){min-width:200px}
+@media(max-width:900px){.quotation-overview{grid-template-columns:1fr}.quotation-total-card{max-width:none;margin:16px}}
+
+/* Quotation editor: conditions left, line items right; one vertical scroll. */
+.sigmyp-account-form .quotation-editor-grid{display:grid;grid-template-columns:minmax(290px, .85fr) minmax(0,1.7fr);gap:20px;align-items:start;margin:0;padding:0;border:0;min-width:0}
+.quotation-editor-info,.quotation-editor-products{min-width:0;border:1px solid #ded8dc;border-radius:10px;overflow:hidden;background:#fff}
+.quotation-editor-fields{display:grid;gap:12px;padding:16px}
+.quotation-editor-fields label,.quotation-product-picker label{display:grid;gap:5px;min-width:0;font-weight:600}
+.quotation-editor-fields input,.quotation-editor-fields select,.quotation-product-picker input,.quotation-product-picker select{width:100%;min-width:0}
+.quotation-day-fields{display:grid;grid-template-columns:minmax(80px,.7fr) minmax(0,1.3fr);gap:10px}
+.quotation-product-picker{display:grid;grid-template-columns:1fr 1.4fr 90px auto;gap:10px;align-items:end;padding:16px}
+.quotation-product-picker button{padding:9px 12px;background:#800030;color:white;border:0;border-radius:7px;cursor:pointer}
+.quotation-editor .quotation-lines td:first-child{min-width:48px;width:48px}
+.quotation-editor .quotation-lines td:nth-child(3){min-width:220px}
+.quotation-editor .quotation-lines input{min-width:85px}
+.quotation-editor .quotation-lines td:last-child{white-space:nowrap}
+.quotation-editor .quotation-add-manual{margin:14px 16px}
+.quotation-editor-totals{margin:16px 16px 16px auto}
+@media(max-width:1050px){.quotation-product-picker{grid-template-columns:1fr 1fr}.sigmyp-account-form .quotation-editor-grid{grid-template-columns:minmax(260px,.8fr) minmax(0,1.2fr)}}
+@media(max-width:760px){.sigmyp-account-form .quotation-editor-grid{grid-template-columns:1fr}.quotation-editor-totals{max-width:none;margin:16px}}
+.quotation-editor .quotation-lines{table-layout:fixed;min-width:720px}
+.quotation-editor .quotation-lines th,.quotation-editor .quotation-lines td{padding:8px 6px}
+.quotation-editor .quotation-lines th:nth-child(1){width:42px}.quotation-editor .quotation-lines th:nth-child(2){width:64px}.quotation-editor .quotation-lines th:nth-child(4){width:68px}.quotation-editor .quotation-lines th:nth-child(5){width:96px}.quotation-editor .quotation-lines th:nth-child(6){width:74px}.quotation-editor .quotation-lines th:nth-child(7){width:58px}.quotation-editor .quotation-lines th:nth-child(8){width:92px}
+.quotation-editor .quotation-lines input,.quotation-editor .quotation-lines select{width:100%;min-width:0;padding:7px 5px}.quotation-editor .quotation-lines td:nth-child(3){min-width:0}
+.quotation-editor-fields label,.quotation-product-picker label{margin-bottom:0}.quotation-editor-fields{gap:10px}
+
+dialog.sigmyp-purchase-dialog{width:min(960px,96vw)}
+.sigmyp-purchase-dialog .sigmyp-account-form{padding:0}
+.sigmyp-purchase-dialog fieldset{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px}
+.sigmyp-purchase-dialog fieldset>p{grid-column:1/-1}
+.sigmyp-purchase-dialog .sigmyp-account-footer{display:flex;justify-content:flex-end;gap:10px}
+.sigmyp-purchase-dialog .sigmyp-account-footer button{padding:10px 16px;border:1px solid #800030;border-radius:7px;background:#800030;color:#fff;font:inherit;cursor:pointer}
+.sigmyp-purchase-dialog .sigmyp-account-footer .sigmyp-account-close{background:#fff;color:#800030}
+@media(max-width:600px){.sigmyp-purchase-dialog fieldset{grid-template-columns:1fr}}
+
+/* Provider record and its related contacts, matching the original workflow. */
+dialog.sigmyp-supplier-dialog{width:min(1560px,96vw)}
+.supplier-detail-layout{display:grid;grid-template-columns:minmax(300px, .85fr) minmax(0,1.8fr);gap:20px;align-items:start}
+.purchase-detail-profile,.supplier-related-contacts{min-width:0}
+.supplier-detail-layout>section{border:1px solid #ded8dc;border-radius:10px;background:#fff;overflow:hidden}
+.supplier-detail-layout .sigmyp-account-form,.supplier-detail-layout .purchase-detail-profile>dl{padding:16px;margin:0}
+.sigmyp-supplier-dialog fieldset{grid-template-columns:1fr;gap:0}
+.sigmyp-supplier-dialog .sigmyp-account-form label{display:grid;grid-template-columns:115px minmax(0,1fr);align-items:center;gap:10px}
+.supplier-related-contacts td{white-space:normal;overflow-wrap:anywhere}
+@media(max-width:900px){.supplier-detail-layout{grid-template-columns:1fr}.sigmyp-supplier-dialog .sigmyp-account-form label{grid-template-columns:120px minmax(0,1fr)}}
+@media(max-width:480px){.sigmyp-supplier-dialog .sigmyp-account-form label{grid-template-columns:1fr}}
+
+.supplier-contact-actions{display:flex;gap:10px;padding:12px 16px}
+.supplier-contact-actions button{border:1px solid #800030;border-radius:7px;background:#800030;color:white;padding:9px 14px;font:inherit;cursor:pointer}
+.sigmyp-supplier-dialog .supplier-contact-form{padding:16px;border-bottom:1px solid #ded8dc}
+.supplier-contact-form .supplier-contact-actions{padding:12px 0 0}
+.supplier-contact-form [role=alert]{color:#800030}
+
+dialog.sigmyp-order-dialog{width:min(1560px,96vw)}
+.sigmyp-order-dialog .sigmyp-account-form>fieldset{display:block}
+.purchase-order-layout{display:grid;grid-template-columns:minmax(260px,.75fr) minmax(0,1.8fr);gap:20px}
+.purchase-order-conditions,.purchase-order-items{min-width:0;border:1px solid #ded8dc;border-radius:10px;overflow:hidden}
+.purchase-order-conditions>label,.purchase-order-conditions>dl{margin:14px 16px}.purchase-order-conditions dd{margin:4px 0 14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.purchase-order-picker{display:flex;align-items:end;gap:12px;padding:16px}.purchase-order-picker label{flex:1;min-width:0;margin:0}
+.purchase-order-items button{border:1px solid #800030;border-radius:6px;background:#800030;color:#fff;padding:8px 12px;cursor:pointer}
+.purchase-order-items td input,.purchase-order-items td select{min-width:85px}.purchase-order-items>p{padding:0 16px}
+@media(max-width:900px){.purchase-order-layout{grid-template-columns:1fr}}
+
+.purchase-approval-confirm{padding:16px 24px;background:#80003008;border-top:1px solid #ded8dc}.purchase-approval-confirm button{margin-right:10px;padding:10px 16px}.purchase-approval-info{margin:16px;color:#166534}
+
+dialog.sigmyp-item-dialog{width:min(1240px,96vw)}
+.item-detail-tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid #ded8dc;margin-bottom:20px}
+.item-detail-tabs button{padding:12px 16px;background:#fff;color:#800030;border:1px solid transparent;border-radius:7px 7px 0 0;font:inherit;cursor:pointer}
+.item-detail-tabs button[aria-selected=true]{border-color:#ded8dc;border-bottom-color:white;background:#80003008;font-weight:700}
+.item-detail-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 24px;margin:0}
+.item-detail-fields dt{font-size:12px;color:#70656c}.item-detail-fields dd{margin:4px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.item-detail-fields>div:last-child{grid-column:1/-1}.item-pending-note{color:#70656c}
+@media(max-width:600px){.item-detail-fields{grid-template-columns:1fr}.item-detail-tabs button{padding:10px}}
+
+/* Purchase order: conditions on the left, items and summary on the right. */
+dialog.sigmyp-order-dialog{width:min(1800px,97vw);max-width:97vw}
+.sigmyp-order-dialog .purchase-order-layout{grid-template-columns:minmax(300px,1fr) minmax(0,2fr);gap:16px;align-items:stretch}
+.sigmyp-order-dialog .purchase-order-summary{display:grid;grid-template-columns:125px 1fr;gap:8px;padding:16px;border-bottom:1px solid #eee9ec}
+.sigmyp-order-dialog .purchase-order-conditions>label{display:grid;grid-template-columns:125px minmax(0,1fr);align-items:center;gap:10px;margin:12px 16px}
+.sigmyp-order-dialog .purchase-order-items{display:flex;flex-direction:column}
+.sigmyp-order-dialog .purchase-order-picker{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 95px auto;gap:10px}
+.sigmyp-order-dialog .purchase-order-picker button{min-height:38px;white-space:nowrap}
+.sigmyp-order-dialog .purchase-order-picker button:disabled{opacity:.45;cursor:not-allowed}
+.sigmyp-order-dialog .purchase-order-items>.sigmyp-account-table-scroll{flex:1;min-height:180px}
+.sigmyp-order-dialog .purchase-order-items table{min-width:690px}
+.sigmyp-order-dialog .purchase-order-items td,.sigmyp-order-dialog .purchase-order-items th{min-width:0;padding:10px 8px}
+.sigmyp-order-dialog .purchase-order-items td:nth-child(2){width:30%;min-width:150px}
+.sigmyp-order-dialog .purchase-order-items td input,.sigmyp-order-dialog .purchase-order-items td select{min-width:72px}
+.purchase-order-bottom{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(230px,1fr);border-top:1px solid #ded8dc;margin-top:16px}
+.purchase-order-comments{min-width:0;border-right:1px solid #ded8dc}
+.purchase-order-comments>label{display:block;margin:12px 16px}
+.purchase-order-comments>p{margin:16px;white-space:pre-wrap;overflow-wrap:anywhere}
+.purchase-order-comments textarea{width:100%;min-height:110px}
+.purchase-order-totals .quotation-total-card{margin:12px 16px;max-width:none;background:transparent;border:0;padding:0}
+.purchase-order-totals .quotation-total-card>div:last-child{border-top:1px solid #ded8dc;padding-top:12px;color:#800030;font-weight:700;font-size:18px}
+.order-visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+@media(max-width:1150px){.sigmyp-order-dialog .purchase-order-layout{grid-template-columns:minmax(260px,.8fr) minmax(0,1.3fr)}.sigmyp-order-dialog .purchase-order-picker{grid-template-columns:1fr 1fr}.sigmyp-order-dialog .purchase-order-conditions>label{grid-template-columns:1fr;gap:4px}.purchase-order-bottom{grid-template-columns:1fr}.purchase-order-comments{border-right:0}}
+@media(max-width:800px){.sigmyp-order-dialog .purchase-order-layout{grid-template-columns:1fr}.sigmyp-order-dialog .purchase-order-items>.sigmyp-account-table-scroll{min-height:0}.sigmyp-order-dialog .purchase-order-summary{grid-template-columns:100px 1fr}}
+
+.sigmyp-production-dialog{width:min(1500px,96vw)}
+.sigmyp-production-dialog .sigmyp-record-scroll{overflow:auto;min-height:0;padding:0 8px}
+.production-product-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px}
+.production-wide{grid-column:1/-1}.production-order-form{display:grid;grid-template-columns:minmax(270px,.7fr) minmax(0,1.5fr);gap:24px}
+.production-order-form section{min-width:0}.production-picker{display:grid;grid-template-columns:2fr 1fr 100px auto;gap:8px;align-items:end;margin-bottom:16px}.production-picker button{margin-bottom:12px;padding:10px}
+.production-lines{width:100%;border-collapse:collapse}.production-lines td,.production-lines th{padding:8px;border-bottom:1px solid #ddd;text-align:left}.production-lines input{min-width:90px}.production-lines textarea{min-width:130px}.sigmyp-production-dialog fieldset:disabled input,.sigmyp-production-dialog fieldset:disabled textarea,.sigmyp-production-dialog fieldset:disabled select{color:#282429;opacity:1;background:#fafafa}
+@media(max-width:900px){.production-order-form{grid-template-columns:1fr}.production-picker{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.production-product-form{grid-template-columns:1fr}}
+
+/* Product sheet follows the original: profile left, processes and items right. */
+.sigmyp-production-product-dialog{width:min(1600px,97vw)}
+.production-product-layout{display:grid;grid-template-columns:minmax(280px, .9fr) minmax(0,1.8fr);gap:20px;align-items:start}
+.production-product-profile,.production-composition-section{min-width:0;border:1px solid #ded8dc;border-radius:10px;background:white;overflow:hidden}
+.production-product-layout h3{margin:0;padding:13px 16px;font-size:16px;border-bottom:1px solid #ded8dc;background:rgba(128,0,48,.035)}
+.production-product-fields{padding:16px}.production-product-fields>label:not(.production-product-text){display:grid;grid-template-columns:118px minmax(0,1fr);align-items:center;gap:10px}
+.production-product-picture{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;min-height:170px;margin:16px 0 20px;background:#faf9fa;border:1px dashed #cfc7cb;border-radius:8px;color:#76636c;font-size:12px}
+.production-product-picture svg{width:125px;height:105px;color:#800030}
+.production-product-text{font-weight:600}.production-product-text textarea{font-weight:400;line-height:1.5;min-height:100px}
+.production-product-composition{display:grid;gap:20px;min-width:0;position:sticky;top:0}
+.production-composition-section{min-height:0}.production-composition-table{width:100%;border-collapse:collapse;font:13px/1.45 Arial,sans-serif}
+.production-composition-table th,.production-composition-table td{padding:12px;text-align:left;border-bottom:1px solid #e6e1e4;vertical-align:top}
+.production-composition-table th{background:#f8f6f7;color:#51464c;font-size:12px;white-space:nowrap}
+.production-composition-table .production-composition-empty{padding:28px 18px;color:#73676d;white-space:normal;line-height:1.6}
+
+@media(max-width:950px){.production-product-layout{grid-template-columns:1fr}.production-product-composition{position:static}.production-composition-section{min-height:0}}
+@media(max-width:480px){.production-product-fields>label:not(.production-product-text){grid-template-columns:1fr}}
+.production-product-picture img {max-width:100%;width:auto;height:180px;object-fit:contain}
+.product-process-card {border:1px solid #ddd4d8;border-radius:10px;padding:14px;margin:12px 0;background:#fff}
+.production-composition-section .production-picker {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.production-composition-section input,.production-composition-section select {max-width:100%;min-width:0}
+.production-composition-table input {width:90px}
+.product-process-card .production-product-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0}
+.product-process-card .production-product-fields label {display:flex;flex-direction:column;align-items:stretch;gap:6px}
+.product-process-card .production-product-text {grid-column:1/-1}
+@media(max-width:650px){.product-process-card .production-product-fields {grid-template-columns:1fr}}
+.production-product-image-actions{margin:0 0 18px;overflow-wrap:anywhere}
+.production-product-image-actions p{font-size:12px;color:#6c6267;line-height:1.5}
+
+.production-composition-body{padding:16px}
+.production-composition-body>.production-picker{margin:0 0 16px}
+.production-composition-body>p{margin:16px 0 0}
+.production-composition-body>.sigmyp-account-table-scroll{margin:0}
+.production-composition-body>.product-process-card:last-child{margin-bottom:0}
+.production-composition-body .production-picker>button{align-self:end;width:auto;justify-self:start;min-width:110px}
+.production-composition-body button{border:1px solid #800030;border-radius:6px;padding:10px 14px;background:#800030;color:#fff;cursor:pointer;font:inherit}
+.production-composition-body button:disabled{opacity:.55;cursor:default}
+.production-composition-body button:focus-visible{outline:3px solid #c78aa1;outline-offset:2px}
+.production-composition-body td button{padding:4px 10px;background:#fff;color:#800030}
+
+/* Production orders: reference layout, with usable spacing and one modal scroll. */
+.sigmyp-production-order-dialog{width:min(1800px,97vw)}
+.sigmyp-production-order-dialog .production-order-form{grid-template-columns:minmax(300px,1fr) minmax(0,2fr);gap:20px;align-items:start}
+.sigmyp-production-order-dialog .production-order-sidebar,.sigmyp-production-order-dialog .production-order-products{border:1px solid #ded5db;border-radius:12px;overflow:hidden;background:#fff}
+.sigmyp-production-order-dialog .production-order-form h3{margin:0;padding:14px 16px;background:rgba(125,0,50,.04);border-bottom:1px solid #ded5db;font-size:16px}
+.sigmyp-production-order-dialog .production-order-body{padding:16px;min-width:0}
+.sigmyp-production-order-dialog .production-stage{display:block;margin:16px 0;padding:12px;border:1px solid #ded5db;border-radius:8px;min-width:0}
+.sigmyp-production-order-dialog .production-stage legend{padding:0 6px;color:#79002e;font-weight:600;font-size:14px}
+.sigmyp-production-order-dialog .production-picker{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) 95px auto}
+.sigmyp-production-order-dialog .production-picker label{min-width:0}
+.sigmyp-production-order-dialog .production-picker button{margin:0 0 12px}
+.sigmyp-production-order-dialog .production-lines{min-width:640px}
+@media(max-width:1100px){.sigmyp-production-order-dialog .production-picker{grid-template-columns:1fr 1fr}}
+@media(max-width:800px){.sigmyp-production-order-dialog .production-order-form{grid-template-columns:1fr}.sigmyp-production-order-dialog .production-order-body{padding:12px}}
+
+.sigmyp-referral-dialog .sigmyp-record-scroll{padding:16px 24px}
+.sigmyp-referral-dialog .referral-comments{white-space:pre-wrap;overflow-wrap:anywhere;max-width:340px}
+.sigmyp-referral-dialog .referral-line-count{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:12px;background:#eee8ec;color:#79002e;font-size:13px}
+.sigmyp-referral-dialog input[readonly],.sigmyp-referral-dialog textarea[readonly]{color:#282429;background:#fafafa}

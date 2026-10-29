@@ -1,0 +1,18 @@
+      function nativeKey(id) { return id is string && id.matches('^new_[a-f0-9-]{36}$'); }
+      function commercialAccountLink(key,id) {
+        return key is string && id is string &&
+          (nativeKey(key) ? id == key && exists(/databases/$(database)/documents/organizations/$(companyId)/commercialAccounts/$(key)) :
+           key.matches('^[a-f0-9]{64}$') && id == 'legacy-account-' + string(get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/accounts/records/$(key)).data.data.id));
+      }
+      function commercialContactLink(key,id,accountId) {
+        return key is string && id is string &&
+          (nativeKey(key) ? id == key && get(/databases/$(database)/documents/organizations/$(companyId)/commercialContacts/$(key)).data.customerId == accountId :
+           key.matches('^[a-f0-9]{64}$') && id == 'legacy-contact-' + string(get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/contacts/records/$(key)).data.data.id) &&
+           accountId == 'legacy-account-' + string(get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/contacts/records/$(key)).data.data.account_id));
+      }
+      function commercialOfficeLink(key,id,contactKey,contactId) {
+        return key == '' && id == '' || (key is string && id is string &&
+          (nativeKey(key) ? id == key && get(/databases/$(database)/documents/organizations/$(companyId)/commercialOffices/$(key)).data.contactId == contactId :
+           key.matches('^[a-f0-9]{64}$') && id == 'legacy-office-' + string(get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/offices/records/$(key)).data.data.id) &&
+           get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/offices/records/$(key)).data.data.contact_id == get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/contacts/records/$(contactKey)).data.data.id));
+      }

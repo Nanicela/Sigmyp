@@ -1,0 +1,29 @@
+      // Editable commercial projection. The imported source remains immutable.
+      match /commercialAccounts/{id} {
+        function validAccount(d) {
+          return d.keys().hasOnly(['identification','name','phone1','phone2','email','billingEmail','website','address','municipality','department','status','personType','vatResponsible','sourceId','sourceDocumentId','createdAt','version','auditId','updatedBy','updatedAt']) &&
+            d.sourceDocumentId == id &&
+            ((d.sourceId == null && id.matches('^new_[a-f0-9-]{36}$')) ||
+             (id.matches('^[a-f0-9]{64}$') && d.sourceId is int &&
+              get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/accounts/records/$(id)).data.data.id == d.sourceId)) &&
+            shortText(d.name,200) &&
+            d.identification is string && d.identification.size() <= 40 &&
+            d.phone1 is string && d.phone1.size() <= 40 && d.phone2 is string && d.phone2.size() <= 40 &&
+            d.email is string && d.email.size() <= 254 && (d.email == '' || d.email.matches('^[^ @]+@[^ @]+[.][^ @]+$')) &&
+            d.billingEmail is string && d.billingEmail.size() <= 254 && (d.billingEmail == '' || d.billingEmail.matches('^[^ @]+@[^ @]+[.][^ @]+$')) &&
+            d.website is string && d.website.size() <= 500 && d.address is string && d.address.size() <= 300 &&
+            d.municipality is string && d.municipality.size() <= 120 && d.department is string && d.department.size() <= 120 &&
+            d.status in ['NEW','QUOTED','ACTIVE','INACTIVE'] && d.personType in ['NATURAL','JURIDICA'] &&
+            (d.vatResponsible == null || d.vatResponsible is bool) && d.createdAt is timestamp;
+        }
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow create: if companyId == '500123568' && orgAccess(companyId,['admin']) &&
+          validAccount(request.resource.data) && request.resource.data.createdAt == request.time &&
+          auditWrite(companyId,'commercialAccounts',id,null);
+        allow update: if companyId == '500123568' && orgAccess(companyId,['admin']) &&
+          validAccount(request.resource.data) &&
+          request.resource.data.sourceId == resource.data.sourceId &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          auditWrite(companyId,'commercialAccounts',id,resource.data);
+        allow delete: if false;
+      }

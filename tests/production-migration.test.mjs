@@ -1,0 +1,6 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {productionProjection} from '../web/production-migration.js';
+import {workspaceTabsForProcess} from '../vue/src/domain/module-catalog.js';
+const fixture={accounts:[{id:1,name:'Cuenta'}],products:[{id:3,code:'P3',name:'Producto',picture:'/private/image',secret:'no'}],production_orders:[{id:4,account_id:1,date_created:'2026-10-01',status:'CREATED'}],production_orders_products:[{production_order_id:4,product_id:3,quantity:'2'}]};
+test('cuatro pestañas y proyección de lectura con vínculos y sin campos privados',()=>{const p=productionProjection(fixture);assert.deepEqual(workspaceTabsForProcess('produccion').map(t=>t.id),['products','productionOrders','referrals','processes']);assert.equal(p.productionOrders[0].accountName,'Cuenta');assert.equal(p.productionOrders[0].lines[0].name,'Producto');assert.equal(p.products[0].secret,undefined);assert.equal(p.products[0].picture,undefined);assert.deepEqual(p.referrals,[]);});
+test('rechaza operaciones de otros años y vínculos huérfanos',()=>{assert.throws(()=>productionProjection({...fixture,production_orders:[{...fixture.production_orders[0],date_created:'2025-12-31'}]}));assert.throws(()=>productionProjection({...fixture,accounts:[]}));assert.throws(()=>productionProjection({...fixture,products:[]}));});

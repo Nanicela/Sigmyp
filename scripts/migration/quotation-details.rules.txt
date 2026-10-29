@@ -1,0 +1,5 @@
+      match /commercialQuotationDetails/{id} {
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow write: if false;
+      }
+

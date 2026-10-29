@@ -117,7 +117,7 @@ El rol anterior de facturador permanece oculto. Al ampliar los módulos, los per
 5. Incorporar Producción y Remisiones sobre productos, materiales y movimientos ya estables.
 6. Incorporar Activos y Soporte.
 7. Completar pagos, cartera e indicadores cruzados.
-8. Preparar migración de datos reales mediante exportación, limpieza, correspondencias, simulación y conciliación. No conectar la aplicación nueva directamente a la base antigua.
+8. Preparar migración de datos reales mediante exportación, limpieza, correspondencias, simulación y conciliación: todos los datos maestros y únicamente operaciones de 2026, según confirmación del 15 de octubre de 2026. Conservar los datos existentes en Firebase y resolver referencias históricas y saldos de apertura antes de importar. No conectar la aplicación nueva directamente a la base antigua.
 9. Ejecutar la etapa DIAN al final.
 
 Cada entrega se prueba localmente con datos ficticios y debe conservar el comportamiento ya aprobado. Durante la migración vigente no se publica en Firebase ni se envía a GitHub sin autorización expresa.
@@ -134,3 +134,36 @@ El siguiente incremento de código es la base común de módulos:
 6. probar todo localmente antes de retirar el módulo clásico.
 
 Este incremento no modifica datos reales ni vuelve a mostrar módulos incompletos en la navegación pública.
+
+## Incremento local del 16 de octubre de 2026
+
+Comercial permite crear cuentas, contactos y oficinas desde sus pestañas, con vínculos validados y registro de auditoría. Las tablas de maestros alternan orden alfabético ascendente/descendente antes de la paginación.
+
+Las nuevas cotizaciones incluyen cuenta y contacto obligatorios, oficina del contacto opcional, fecha del año vigente, vigencia, condiciones comerciales y hasta tres conceptos. Usan cantidades en milésimas e importes en centavos; descuentos e IVA seleccionado (0, 5 o 19) se verifican en reglas. El límite de tres conceptos permite mantener los controles de integridad dentro del presupuesto de evaluación de reglas del modo Spark. Ampliarlo requiere rediseñar la validación o habilitar el cálculo confiable en servidor; no quitar controles para elevar el límite.
+
+Se guardan copias de los datos de cuenta/contacto usados y un consecutivo propio COT-año-secuencia, asignado junto con la cotización y la auditoría. Los originales importados permanecen intactos. Esta entrega permite crear y visualizar cotizaciones nuevas; no incluye editar/aprobar cotizaciones, emitir documentos fiscales ni convertir a órdenes. Solo se publicaron las reglas autorizadas; la interfaz permanece local.
+
+
+## Referencia funcional confirmada — 20 de octubre de 2026
+
+La fuente principal es `/home/daniela/sigmyp/sigmyp2`, indicada nuevamente por la usuaria. Consultar vistas, controladores y modelos originales antes de implementar cada módulo. La aplicación nueva continúa en Vue y Firebase; el código anterior se consulta sin modificarlo.
+
+Comparación de Compras con `app/static/app/view/purchases/`:
+
+- **Proveedores:** `Providers.js` y `NewProvider.js`. Incorporados NIT, nombre, dos teléfonos, correo, web, dirección, ciudad, certificado, tipo/monto de crédito y evaluación. Nombre obligatorio; crédito no negativo con dos decimales, inicial 3.000.000 para nuevos; evaluación inicial 1 y solo lectura como en el original. Se conserva formato telefónico histórico, incluidas extensiones/FAX.
+- **Contactos:** contrastar `NewProviderContact.js` y su controlador antes de ampliar campos y vínculos.
+- **Órdenes:** `NewPurchaseOrder.js` incluye solicitante, entrega prevista, anexos, orden de producción, aprobación y líneas con costos/totales. La versión nueva aún crea únicamente cabeceras en borrador: falta trasladar el flujo completo.
+- **Ítems:** `NewItem.js` incluye información y movimientos relacionados con costos y usuarios. Falta completar esa ficha sin confundir importación histórica con saldos conciliados.
+- **Kárdex:** mantener la decisión explícita de la usuaria: nuevas solicitudes pendientes, sin afectar existencias mientras los saldos no estén conciliados.
+
+No considerar estos módulos equivalentes al original solo por tener tablas y modales. Conservar todos los maestros y limitar operaciones importadas a 2026.
+
+### Producción: modales locales (27 de octubre de 2026)
+
+`ProductionEditor.vue` implementa la creación y edición desde el visualizador, con pie fijo y confirmación verde. Se tomó como referencia `app/static/app/view/production/NewProduct.js` y `NewProductionOrder.js` de sigmyp2.
+
+Los productos conservan la ficha comercial/técnica, costo opcional y lista de verificación. Las órdenes relacionan cuenta, cotización y contacto; la fecha original y el estado no se editan libremente. Las órdenes en Creado permiten modificar ficha y líneas; los otros estados quedan en consulta. Las líneas se publican por revisión inmutable sin límite fijo de filas, con cantidades positivas y productos existentes. Las nuevas órdenes reciben identificador único OP-2026-UUID; la numeración secuencial queda pendiente.
+
+Guardado auditado y control de versión en productionProducts y productionOrders; originales en productionImports permanecen intactos frente al navegador. Los campos adicionales del respaldo se completaron mediante scripts/migration/production-enrich.mjs, sin sobrescribir valores existentes. Reglas mínimas y evidencia en .local/production-edit; no usar las reglas raíz divergentes para desplegar.
+
+Pendientes del original: imágenes/adjuntos, composición de productos con ítems y recursos, responsables por etapa, aprobación técnica/comercial, entrega/recepción e inventario. Esta entrega no activa esos procesos.

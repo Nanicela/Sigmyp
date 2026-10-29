@@ -1,0 +1,88 @@
+      function validQuotationEdit(q) {
+        return q.validUntil is int && q.validUntil >= q.date && q.lines is list && q.lines.size()>0 && q.lines.size()<=3 && validQuotationLine(q.lines[0]) &&
+          q.taxCents is int && q.taxCents == quotationSum(q.lines,'taxCents') && q.totalCents is int && q.totalCents == quotationSum(q.lines,'totalCents') &&
+          q.paymentMethod is string && q.paymentMethod.size()<=2000 && q.warranty is string && q.warranty.size()<=2000 &&
+          q.deliveryTime is string && q.deliveryTime.size()<=2000 && q.comments is string && q.comments.size()<=2000;
+      }
+      match /commercialQuotationEdits/{id} {
+        function validEdit() {
+          let d=request.resource.data;
+          return d.keys().hasOnly(['sourceId','sourceDocumentId','paymentMethod','warranty','deliveryTime','comments','version','auditId','updatedBy','updatedAt']) &&
+            d.sourceDocumentId == id && d.sourceId is int && get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/quotations/records/$(id)).data.data.id == d.sourceId &&
+            d.paymentMethod is string && d.paymentMethod.size()<=2000 && d.warranty is string && d.warranty.size()<=2000 && d.deliveryTime is string && d.deliveryTime.size()<=2000 && d.comments is string && d.comments.size()<=2000;
+        }
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow create: if companyId == '500123568' && orgAccess(companyId,['admin']) && validEdit() && auditWrite(companyId,'commercialQuotationEdits',id,null);
+        allow update: if companyId == '500123568' && orgAccess(companyId,['admin']) && validEdit() && auditWrite(companyId,'commercialQuotationEdits',id,resource.data);
+        allow delete: if false;
+      }
+      function validQuotationLine(l) {
+        return l.keys().hasOnly(['description','quantityUnits','unitPriceCents','discountBps','rate','amountCents','discountCents','subtotalCents','taxCents','totalCents']) && shortText(l.description,500) &&
+          l.quantityUnits is int && l.quantityUnits > 0 && l.quantityUnits <= 1000000000 && l.unitPriceCents is int && l.unitPriceCents >= 0 && l.unitPriceCents <= 1000000000 && l.quantityUnits * l.unitPriceCents <= 10000000000000 &&
+          l.discountBps is int && l.discountBps >= 0 && l.discountBps <= 10000 && l.rate in [0,5,19] &&
+          l.amountCents is int && l.amountCents == int((l.quantityUnits * l.unitPriceCents + 500) / 1000) &&
+          l.discountCents is int && l.discountCents == int((l.amountCents * l.discountBps + 5000) / 10000) &&
+          l.subtotalCents is int && l.subtotalCents == l.amountCents - l.discountCents &&
+          l.taxCents is int && l.taxCents == int((l.subtotalCents * l.rate + 50) / 100) &&
+          l.totalCents is int && l.totalCents == l.subtotalCents + l.taxCents;
+      }
+      function quotationValue(lines,index,key) { return lines.size() > index ? lines[index][key] : 0; }
+      function quotationSum(lines,key) { return quotationValue(lines,0,key) + quotationValue(lines,1,key) + quotationValue(lines,2,key); }
+      function validNewQuotation(q) { return q.keys().hasOnly(['date', 'validUntil', 'businessYear', 'lines', 'amountCents', 'discountCents', 'subtotalCents', 'taxCents', 'totalCents', 'currency', 'status', 'schemaVersion', 'paymentMethod', 'warranty', 'deliveryTime', 'comments', 'customerId', 'accountDocumentId', 'contactId', 'contactDocumentId', 'officeId', 'officeDocumentId', 'snapshot', 'companyId', 'sequence', 'number', 'createdAt', 'createdBy', 'version', 'auditId', 'updatedBy', 'updatedAt']) &&
+          q.companyId == companyId &&
+          q.schemaVersion == 1 &&
+          q.currency == 'COP' &&
+          q.status == 'CREATED' &&
+          q.createdAt == request.time &&
+          q.createdBy == request.auth.uid &&
+          q.date is int &&
+          q.validUntil is int &&
+          q.validUntil >= q.date &&
+          q.businessYear is int &&
+          q.businessYear == (request.time - duration.value(5,'h')).year() &&
+          timestamp.value(q.date).year() == q.businessYear &&
+          q.sequence is int && q.sequence > 0 && q.sequence <= 1000000000 &&
+          q.number == 'COT-'+string(q.businessYear)+'-'+string(q.sequence) &&
+          q.lines is list && q.lines.size()>0 && q.lines.size()<=3 &&
+          (q.lines.size()<=0 || validQuotationLine(q.lines[0])) &&
+          q.taxCents is int && q.taxCents == quotationSum(q.lines,'taxCents') &&
+          q.totalCents is int && q.totalCents == quotationSum(q.lines,'totalCents') &&
+          true; }
+      match /commercialQuotations/{id} {
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow create: if companyId == '500123568' && orgAccess(companyId,['admin']) && nativeKey(id) && validNewQuotation(request.resource.data) &&
+          getAfter(/databases/$(database)/documents/organizations/$(companyId)/commercialCounters/$('quotations-'+string(request.resource.data.businessYear))).data.last == request.resource.data.sequence &&
+          getAfter(/databases/$(database)/documents/organizations/$(companyId)/commercialCounters/$('quotations-'+string(request.resource.data.businessYear))).data.lastQuotationId == id &&
+          auditWrite(companyId,'commercialQuotations',id,null);
+        allow update: if companyId == '500123568' && orgAccess(companyId,['admin']) && resource.data.status == 'CREATED' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['validUntil','lines','amountCents','discountCents','subtotalCents','taxCents','totalCents','paymentMethod','warranty','deliveryTime','comments','version','auditId','updatedBy','updatedAt']) &&
+          validQuotationEdit(request.resource.data) && auditWrite(companyId,'commercialQuotations',id,resource.data);
+        allow delete: if false;
+      }
+      match /commercialCounters/{id} {
+        function validCounter() {
+          let d=request.resource.data;
+          let q=getAfter(/databases/$(database)/documents/organizations/$(companyId)/commercialQuotations/$(d.lastQuotationId)).data;
+          return d.keys().hasOnly(['last','lastQuotationId','updatedAt']) && d.last is int && d.updatedAt == request.time && nativeKey(d.lastQuotationId) &&
+            id == 'quotations-'+string(q.businessYear) && q.sequence == d.last && q.createdAt == request.time && q.createdBy == request.auth.uid && q.version == 1 && q.paymentMethod is string && q.paymentMethod.size() <= 2000 &&
+          q.warranty is string && q.warranty.size() <= 2000 &&
+          q.deliveryTime is string && q.deliveryTime.size() <= 2000 &&
+          q.comments is string && q.comments.size() <= 2000 &&
+          q.snapshot is map && q.snapshot.keys().hasOnly(['accountName', 'identification', 'accountEmail', 'address', 'city', 'contactName', 'contactEmail', 'contactPhone', 'officeName']) &&
+          q.snapshot.accountName is string && q.snapshot.accountName.size()<=1000 &&
+          q.snapshot.identification is string && q.snapshot.identification.size()<=1000 &&
+          q.snapshot.accountEmail is string && q.snapshot.accountEmail.size()<=1000 &&
+          q.snapshot.address is string && q.snapshot.address.size()<=1000 &&
+          q.snapshot.city is string && q.snapshot.city.size()<=1000 &&
+          q.snapshot.contactName is string && q.snapshot.contactName.size()<=1000 &&
+          q.snapshot.contactEmail is string && q.snapshot.contactEmail.size()<=1000 &&
+          q.snapshot.contactPhone is string && q.snapshot.contactPhone.size()<=1000 &&
+          q.snapshot.officeName is string && q.snapshot.officeName.size()<=1000 && commercialAccountLink(q.accountDocumentId,q.customerId) && commercialContactLink(q.contactDocumentId,q.contactId,q.customerId) && commercialOfficeLink(q.officeDocumentId,q.officeId,q.contactDocumentId,q.contactId);
+        }
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin']);
+        allow create: if companyId == '500123568' && orgAccess(companyId,['admin']) && request.resource.data.last == 1 && validCounter();
+        allow update: if companyId == '500123568' && orgAccess(companyId,['admin']) && request.resource.data.last == resource.data.last + 1 && validCounter();
+        allow delete: if false;
+      }
+
+      function quotationAuditDetails(q) { return (q.lines.size()<=1 || validQuotationLine(q.lines[1])) && (q.lines.size()<=2 || validQuotationLine(q.lines[2])) && q.amountCents is int && q.amountCents == q.subtotalCents + q.discountCents && q.discountCents is int && q.discountCents == quotationSum(q.lines,'discountCents') && q.subtotalCents is int && q.subtotalCents == q.totalCents - q.taxCents; }

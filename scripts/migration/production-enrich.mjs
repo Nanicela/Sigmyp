@@ -1,0 +1,16 @@
+// Add only the fields missing from the first projection. Never replace existing fields.
+import {readFile,writeFile,mkdir} from 'node:fs/promises';import {resolve} from 'node:path';import {createRequire} from 'node:module';import {productionProjection} from '../../web/production-migration.js';
+const dir=resolve('.local/production-edit');await mkdir(dir,{recursive:true});
+const source=JSON.parse(await readFile(resolve('../../work/migration-2026/full-source.json'),'utf8'));if(source.year!==2026)throw Error('Origen fuera de alcance');
+const view=productionProjection(Object.fromEntries(Object.entries(source.tables).map(([k,v])=>[k,v.rows]))),keys={products:['cost','checklist','techSpecs'],productionOrders:['accountId','contactId','quotationNumber']};
+const plan=Object.entries(keys).flatMap(([group,fields])=>view[group].map(r=>({group,id:r.id,values:Object.fromEntries(fields.map(k=>[k,r[k]]))})));
+await writeFile(dir+'/enrich-plan.json',JSON.stringify(plan,null,2));console.log('Preparados '+plan.length+' registros con campos adicionales.');
+if(!process.argv.includes('--apply'))process.exit(0);
+const auth=createRequire(import.meta.url)('firebase-tools/lib/auth'),config=JSON.parse(await readFile(resolve('../../work/firebase-config/configstore/firebase-tools.json'),'utf8')),token=await auth.getAccessToken(config.tokens.refresh_token,['https://www.googleapis.com/auth/cloud-platform']);
+const root='projects/facturacion-electronica-a73e3/databases/(default)/documents',base=root+'/organizations/500123568/productionImports';
+async function req(path,options={}){const r=await fetch('https://firestore.googleapis.com/v1/'+path,{...options,headers:{Authorization:'Bearer '+token.access_token,'Content-Type':'application/json'}});if(!r.ok)throw Error('Firestore HTTP '+r.status);return r.json();}
+async function list(g){const r=await req(base+'/'+g+'/records?pageSize=1000');if(r.nextPageToken)throw Error('Colección mayor a la preparada');return r.documents||[];}
+const writes=[],backups=[];for(const group of Object.keys(keys)){const docs=await list(group),byId=new Map(docs.map(d=>[d.name.split('/').at(-1),d]));for(const p of plan.filter(p=>p.group===group)){const d=byId.get(p.id);if(!d)throw Error('Registro ausente: '+p.id);const fields={};for(const [k,v]of Object.entries(p.values)){if(k in d.fields){if(d.fields[k].stringValue!==v)throw Error('Campo ya existe con otro valor: '+p.id+'/'+k);}else fields[k]={stringValue:v};}if(Object.keys(fields).length){backups.push(d);writes.push({update:{name:d.name,fields},updateMask:{fieldPaths:Object.keys(fields)},currentDocument:{updateTime:d.updateTime}});}}}
+await writeFile(dir+'/enrich-before.json',JSON.stringify(backups));if(writes.length)await req(root+':commit',{method:'POST',body:JSON.stringify({writes})});
+for(const group of Object.keys(keys)){const docs=await list(group),byId=new Map(docs.map(d=>[d.name.split('/').at(-1),d]));for(const p of plan.filter(p=>p.group===group))for(const[k,v]of Object.entries(p.values))if(byId.get(p.id)?.fields[k]?.stringValue!==v)throw Error('Verificación fallida');}
+await writeFile(dir+'/enrich-verified.json',JSON.stringify({verified:true,records:plan.length,written:writes.length}));console.log('Campos adicionales verificados.');

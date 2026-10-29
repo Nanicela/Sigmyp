@@ -411,7 +411,7 @@ async function start() {
   audit=setupAudit({db,getCompany:()=>$('#company').value,message});$('#open-audit').onclick=()=>audit.open();
   access = setupAccess({db,getCompany:()=>$('#company').value,getRole:currentRole,message});
   if(spark){products=setupProducts({db,getRole:currentRole,onChange:changed});for(const row of document.querySelectorAll('#lines .line'))products.attachLine(row);}
-  if (spark) profiles = setupProfiles({ db, getUser: () => user, getRole:currentRole, message, onBuyer: c => {
+  if (spark) profiles = setupProfiles({ db, approvalAvailable:config.purchaseOrderApprovalEnabled===true, getUser: () => user, getRole:currentRole, message, onBuyer: c => {
     if ($('#kind').value !== 'INVOICE') { copyBuyer(); message('Las notas conservan el comprador de la factura de referencia.'); return; }
     $('#draft-form').elements.buyer_name.value = c?.name || ''; $('#draft-form').elements.buyer_id.value = c?.identification || ''; changed();
   }});

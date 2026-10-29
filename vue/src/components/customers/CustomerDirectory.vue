@@ -2,6 +2,17 @@
 import { computed, nextTick, ref } from 'vue';
 
 const customers=ref([]),contacts=ref([]),sites=ref([]),companyName=ref(''),canEdit=ref(false),loading=ref(false),search=ref(''),selectedCustomerId=ref('');
+const legacyProduction=ref(null),legacyPurchases=ref(null),legacyCommercial=ref(null),canEditAccounts=ref(false);
+let saveProductionHandler=null,ensureProductionDetailHandler=null;
+async function saveProduction(...args){return saveProductionHandler(...args);}
+async function ensureProductionDetail(record,group){return ensureProductionDetailHandler(record,group);}
+let ensureQuotationDetailHandler=null,ensureWorkspaceHandler=null,createPurchaseHandler=null,savePurchaseHandler=null,saveAccountHandler=null,saveRecordHandler=null,createQuotationHandler=null,updateQuotationHandler=null;
+async function createPurchase(group,id,input){if(!createPurchaseHandler)throw Error('La creación no está disponible.');return createPurchaseHandler(group,id,input);}
+async function savePurchase(group,record,input){if(!savePurchaseHandler)throw Error('El guardado no está disponible.');return savePurchaseHandler(group,record,input);}
+async function updateQuotation(record,input){if(!updateQuotationHandler)throw Error("El guardado no está disponible.");return updateQuotationHandler(record,input);}
+async function createQuotation(id,input){if(!createQuotationHandler)throw Error("La creación no está disponible.");return createQuotationHandler(id,input);}
+async function saveRecord(kind,record,input){if(!saveRecordHandler)throw Error("La edición no está disponible.");return saveRecordHandler(kind,record,input);}
+async function saveAccount(account,input){if(!saveAccountHandler)throw Error("La edición no está disponible.");return saveAccountHandler(account,input);}
 const detailDialog=ref(null),customerDialog=ref(null),contactDialog=ref(null),siteDialog=ref(null),customerMode=ref('create'),relationMode=ref('create');
 const vatLabels={responsable:'Responsable de IVA',no_responsable:'No responsable de IVA',por_confirmar:'Por confirmar'};
 const selectedCustomer=computed(()=>customers.value.find(customer=>customer.id===selectedCustomerId.value)||null);
@@ -15,9 +26,11 @@ async function openCustomerEditor(customer=null){selectedCustomerId.value=custom
 async function openContactEditor(contact=null){relationMode.value=contact?'edit':'create';contactDialog.value?.showModal();await nextTick();document.querySelector('#customer-contact-form [name="name"]')?.focus();}
 async function openSiteEditor(site=null){relationMode.value=site?'edit':'create';siteDialog.value?.showModal();await nextTick();document.querySelector('#customer-site-form [name="name"]')?.focus();}
 function closeAll(){for(const dialog of [detailDialog,customerDialog,contactDialog,siteDialog])if(dialog.value?.open)dialog.value.close();}
-function render(payload={}){customers.value=payload.customers||[];contacts.value=payload.contacts||[];sites.value=payload.sites||[];companyName.value=payload.companyName||'';canEdit.value=!!payload.canEdit;loading.value=!!payload.loading;if(selectedCustomerId.value&&!customers.value.some(customer=>customer.id===selectedCustomerId.value))closeAll();window.dispatchEvent(new CustomEvent('sigmyp:workspace-data',{detail:{moduleId:'crm'}}));}
-function snapshot(){return {customers:customers.value.map(item=>({...item})),contacts:contacts.value.map(item=>({...item})),sites:sites.value.map(item=>({...item})),companyName:companyName.value,canEdit:canEdit.value,loading:loading.value};}
-defineExpose({render,snapshot,openDetails,openCustomerEditor,openContactEditor,openSiteEditor,closeAll,selectedId:()=>selectedCustomerId.value});
+async function ensureWorkspace(module){return ensureWorkspaceHandler?.(module);}
+async function ensureQuotationDetail(id){if(!ensureQuotationDetailHandler)throw Error('Abre la compañía nuevamente.');return ensureQuotationDetailHandler(id);}
+function render(payload={}){saveProductionHandler=payload.saveProduction;ensureProductionDetailHandler=payload.ensureProductionDetail;ensureQuotationDetailHandler=payload.ensureQuotationDetail;ensureWorkspaceHandler=payload.ensureWorkspace;createPurchaseHandler=payload.createPurchase;savePurchaseHandler=payload.savePurchase;saveAccountHandler=payload.saveAccount;saveRecordHandler=payload.saveRecord;createQuotationHandler=payload.createQuotation;updateQuotationHandler=payload.updateQuotation;canEditAccounts.value=!!payload.canEditAccounts;legacyCommercial.value=payload.legacyCommercial||null;legacyPurchases.value=payload.legacyPurchases||null;legacyProduction.value=payload.legacyProduction||null;customers.value=payload.customers||[];contacts.value=payload.contacts||[];sites.value=payload.sites||[];companyName.value=payload.companyName||'';canEdit.value=!!payload.canEdit;loading.value=!!payload.loading;if(selectedCustomerId.value&&!customers.value.some(customer=>customer.id===selectedCustomerId.value))closeAll();window.dispatchEvent(new CustomEvent('sigmyp:workspace-data',{detail:{moduleId:'crm'}}));}
+function snapshot(){return {canEditAccounts:canEditAccounts.value,legacyCommercial:legacyCommercial.value,legacyPurchases:legacyPurchases.value,legacyProduction:legacyProduction.value,customers:customers.value.map(item=>({...item})),contacts:contacts.value.map(item=>({...item})),sites:sites.value.map(item=>({...item})),companyName:companyName.value,canEdit:canEdit.value,loading:loading.value};}
+defineExpose({render,snapshot,saveProduction,ensureProductionDetail,ensureWorkspace,ensureQuotationDetail,savePurchase,createPurchase,saveAccount,saveRecord,createQuotation,updateQuotation,openDetails,openCustomerEditor,openContactEditor,openSiteEditor,closeAll,selectedId:()=>selectedCustomerId.value});
 </script>
 
 <template>

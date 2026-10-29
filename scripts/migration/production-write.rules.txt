@@ -1,0 +1,45 @@
+      function prodText(s,n){return s is string && s.size()<=n;}
+      function prodDate(s){return s is string && (s.matches('^20[0-9]{2}-((01|03|05|07|08|10|12)-(0[1-9]|[12][0-9]|3[01])|(04|06|09|11)-(0[1-9]|[12][0-9]|30)|02-(0[1-9]|1[0-9]|2[0-8]))$') || s.matches('^20(0[48]|[2468][048]|[13579][26])-02-29$'));}
+      function prodProduct(id){return exists(/databases/$(database)/documents/organizations/$(companyId)/productionProducts/$(id)) || exists(/databases/$(database)/documents/organizations/$(companyId)/productionImports/products/records/$(id));}
+      match /productionProducts/{id} {
+        function shape(d){let v=d.values;return d.keys().hasOnly(['values','version','auditId','updatedAt','updatedBy']) && v.keys().hasOnly(['code','name','description','checklist','techSpecs','comments','cost','price','tax']) && shortText(v.code,100) && shortText(v.name,200) && prodText(v.description,20000) && prodText(v.checklist,20000) && prodText(v.techSpecs,20000) && prodText(v.comments,4000) && (v.cost==null || (v.cost is number && v.cost>=0 && v.cost<=1000000000000)) && v.price is number && v.price>=0 && v.price<=1000000000000 && v.tax is number && v.tax>=0 && v.tax<=100;}
+        allow read: if quoteReader();
+        allow create: if quoteEditor() && (nativeKey(id)||exists(/databases/$(database)/documents/organizations/$(companyId)/productionImports/products/records/$(id))) && shape(request.resource.data) && auditWrite(companyId,'productionProducts',id,null);
+        allow update: if quoteEditor() && shape(request.resource.data) && auditWrite(companyId,'productionProducts',id,resource.data);
+        allow delete: if false;
+      }
+      match /productionRevisions/{revisionId} {
+        allow read: if quoteReader();
+        allow create: if quoteEditor() && request.resource.data.keys().hasOnly(['orderId','ownerUid','sealed','createdAt']) && shortText(request.resource.data.orderId,100) && request.resource.data.ownerUid==request.auth.uid && request.resource.data.sealed==false && request.resource.data.createdAt==request.time;
+        allow update: if quoteEditor() && resource.data.ownerUid==request.auth.uid && !resource.data.sealed && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sealed']) && request.resource.data.sealed==true && getAfter(/databases/$(database)/documents/organizations/$(companyId)/productionOrders/$(resource.data.orderId)).data.revisionId==revisionId;
+        allow delete: if false;
+        match /lines/{index} {
+          function rev(){return get(/databases/$(database)/documents/organizations/$(companyId)/productionRevisions/$(revisionId)).data;}
+          function shape(d){let l=d.line;return d.keys().hasOnly(['index','line']) && d.index is int && d.index>=0 && string(d.index)==index && l.keys().hasOnly(['productId','code','name','quantity','serial','comments']) && prodProduct(l.productId) && prodText(l.code,100) && shortText(l.name,200) && l.quantity is number && l.quantity>0 && l.quantity<=1000000000 && prodText(l.serial,500) && prodText(l.comments,2000) && (d.index==0 || getAfter(/databases/$(database)/documents/organizations/$(companyId)/productionRevisions/$(revisionId)/lines/$(string(d.index-1))).data.index==d.index-1);}
+          allow read: if quoteReader();
+          allow create: if quoteEditor() && rev().ownerUid==request.auth.uid && !rev().sealed && shape(request.resource.data);
+          allow update,delete: if false;
+        }
+      }
+      function prodQuotation(v){
+        let q=/databases/$(database)/documents/organizations/$(companyId)/commercialQuotationVersions/$(v.quotationId);
+        let n=/databases/$(database)/documents/organizations/$(companyId)/commercialQuotations/$(v.quotationId);
+        return exists(q) ? get(q).data.links.customerId==v.accountId : exists(n) ? get(n).data.customerId==v.accountId : (v.quotationDocumentId.matches('^[a-f0-9]{64}$') && v.quotationContactDocumentId.matches('^[a-f0-9]{64}$') && prodLegacyQuotation(v));
+      }
+      function prodLegacyQuotation(v){
+        let q=get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/quotations/records/$(v.quotationDocumentId)).data.data;
+        let c=get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/contacts/records/$(v.quotationContactDocumentId)).data.data;
+        return v.quotationId=='legacy-quotation-'+string(q.id) && c.id==q.contact_id && v.accountId=='legacy-account-'+string(c.account_id);
+      }
+      function prodConditions(v,id){return v.keys().hasOnly(['date','deliveryDate','accountId','accountDocumentId','accountName','contactId','contactDocumentId','contactName','quotationId','quotationDocumentId','quotationNumber','quotationContactDocumentId','comments','status']) && prodDate(v.date) && v.date.matches('^2026-.*') && prodDate(v.deliveryDate) && v.deliveryDate>=v.date && v.status=='CREATED' && prodText(v.accountName,200) && prodText(v.contactName,200) && prodText(v.quotationNumber,100) && prodText(v.comments,4000);}
+      function prodLinks(v,id){return commercialAccountLink(v.accountDocumentId,v.accountId) && ((v.contactId=='' && v.contactDocumentId=='') || commercialContactLink(v.contactDocumentId,v.contactId,v.accountId)) && (v.quotationDocumentId==''?prodHistoricalQuotation(v,id):prodQuotation(v));}
+      function prodHistoricalQuotation(v,id){let p=get(/databases/$(database)/documents/organizations/$(companyId)/productionImports/productionOrders/records/$(id)).data;return v.quotationDocumentId=='' && v.quotationContactDocumentId=='' && v.accountId==p.accountId && v.quotationId=='legacy-quotation-'+p.quotationId && p.quotationId!='';}
+      function prodPublished(d,id){let path=/databases/$(database)/documents/organizations/$(companyId)/productionRevisions/$(d.revisionId);let r=get(path).data;return r.orderId==id && r.ownerUid==request.auth.uid && !r.sealed && getAfter(path).data.sealed && getAfter(/databases/$(database)/documents/organizations/$(companyId)/productionRevisions/$(d.revisionId)/lines/$(string(d.lineCount-1))).data.index==d.lineCount-1;}
+      match /productionOrders/{id} {
+        function shape(d){return d.keys().hasOnly(['values','number','revisionId','lineCount','version','auditId','updatedBy','updatedAt']) && shortText(d.number,100) && prodText(d.revisionId,100) && d.lineCount is int && d.lineCount>0 && prodConditions(d.values,id);}
+        function original(d){let p=/databases/$(database)/documents/organizations/$(companyId)/productionImports/productionOrders/records/$(id);return nativeKey(id) ? d.number=='OP-2026-'+id.replace('new_','').upper() : exists(p) && get(p).data.status=='CREATED' && d.number==get(p).data.number && d.values.date==get(p).data.date;}
+        allow read: if quoteReader();
+        allow create: if quoteEditor() && shape(request.resource.data) && original(request.resource.data) && prodPublished(request.resource.data,id) && auditWrite(companyId,'productionOrders',id,null);
+        allow update: if quoteEditor() && resource.data.values.status=='CREATED' && shape(request.resource.data) && request.resource.data.number==resource.data.number && request.resource.data.values.date==resource.data.values.date && prodPublished(request.resource.data,id) && auditWrite(companyId,'productionOrders',id,resource.data);
+        allow delete: if false;
+      }

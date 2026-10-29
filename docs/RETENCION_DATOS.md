@@ -1,6 +1,6 @@
 # Política de retención anual de datos
 
-Actualizado: 13 de octubre de 2026.
+Actualizado: 15 de octubre de 2026.
 
 ## Decisión de producto
 
@@ -53,3 +53,16 @@ El cierre seguirá este orden:
 7. conservar un índice mínimo que permita localizar y recuperar el periodo.
 
 No se eliminarán datos reales durante el desarrollo ni se automatizará el cierre hasta contar con almacenamiento de archivo, restauración probada, responsables y una política aprobada para cada tipo documental.
+
+## Alcance confirmado para la importación inicial
+
+El 15 de octubre de 2026 la usuaria confirmó importar a Firebase todos los datos maestros del sistema anterior, independientemente de su fecha, y únicamente las operaciones de 2026. Este alcance fijo de la importación es distinto del filtro de año vigente de la aplicación.
+
+- Incluir operaciones cuya fecha de negocio esté entre el 1 de enero de 2026 (inclusive) y el 1 de enero de 2027 (exclusive), en America/Bogota. No filtrar por fecha de modificación.
+- Importar todos los maestros, incluidos los inactivos, preservando su estado, identificadores de origen y relaciones. Vincular usuarios con Firebase Authentication mediante un procedimiento compatible; no copiar contraseñas antiguas ni conceder roles globales automáticamente.
+- Conservar los datos actuales de Firebase. Resolver duplicados y correspondencias por compañía antes de escribir; la importación debe poder repetirse sin duplicar registros.
+- Separar los registros sin fecha válida para revisión; no atribuirles 2026 por defecto.
+- Inventariar referencias desde operaciones de 2026 a operaciones de otros años y saldos/existencias de apertura. Documentar su conciliación y el tratamiento necesario antes de importar, sin incluir automáticamente operaciones anteriores ni dejar referencias rotas.
+- Mantener intacta la base de origen. Excluir periodos de la importación no autoriza borrarlos del origen ni de Firebase.
+
+Este documento registra el alcance; no acredita una importación ejecutada. Preparar primero el inventario, correspondencias y simulación con conteos y totales verificables.

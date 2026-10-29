@@ -2,7 +2,7 @@ import { createApp, nextTick } from 'vue';
 import pages from './generated/process-pages.js';
 import ProcessMap from './components/processes/ProcessMap.vue';
 import ProcessWorkspace from './components/processes/ProcessWorkspace.vue';
-import { modulesForProcess } from './domain/module-catalog.js';
+import { workspaceTabsForProcess } from './domain/module-catalog.js';
 import { processByFile } from './domain/process-catalog.js';
 
 const file = location.pathname.split('/').pop() || 'index.html';
@@ -18,7 +18,7 @@ await nextTick();
 document.documentElement.dataset.ui = 'vue';
 
 const process = processByFile(file);
-const processModules = process ? modulesForProcess(process.id) : [];
+const processModules = process ? workspaceTabsForProcess(process.id) : [];
 if (processModules.length) {
   const tabs = document.querySelector('.detail-tabs');
   const firstPanel = tabs?.nextElementSibling;

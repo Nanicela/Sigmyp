@@ -1,0 +1,3 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {nextProductionNumber} from '../web/production-numbering.js';
+test('conserva prefijo, año y consecutivo del original sin reinicio anual',()=>{assert.deepEqual(nextProductionNumber({prefix:'OP-',last:1690},2026),{sequence:1691,number:'OP-2026-1691'});assert.equal(nextProductionNumber({prefix:'OP-',last:1690},2027).number,'OP-2027-1691');assert.equal(nextProductionNumber({prefix:'OP-',last:8},2026).number,'OP-2026-009');});
+test('rechaza contador ausente o corrupto',()=>{for(const c of [null,{prefix:'OP-',last:-1},{prefix:'OP-',last:1.5},{prefix:'X',last:1}])assert.throws(()=>nextProductionNumber(c,2026));});

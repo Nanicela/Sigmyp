@@ -1,0 +1,33 @@
+      match /purchaseOrderRevisions/{revisionId} {
+        allow read: if quoteReader();
+        allow create: if quoteEditor() && request.resource.data.keys().hasOnly(['quoteId','ownerUid','sealed','createdAt']) && request.resource.data.quoteId is string && request.resource.data.quoteId.size()>0 && request.resource.data.quoteId.size()<=100 && request.resource.data.ownerUid==request.auth.uid && request.resource.data.sealed==false && request.resource.data.createdAt==request.time;
+        allow update: if quoteEditor() && resource.data.ownerUid==request.auth.uid && resource.data.sealed==false && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sealed']) && request.resource.data.sealed==true && getAfter(/databases/$(database)/documents/organizations/$(companyId)/purchaseOrderVersions/$(resource.data.quoteId)).data.revisionId==revisionId;
+        allow delete: if false;
+        match /lines/{lineId} {
+          function parentRevision(){return get(/databases/$(database)/documents/organizations/$(companyId)/purchaseOrderRevisions/$(revisionId)).data;}
+          function accumulated(d) {
+            let previous=d.index==0?{'amountCents':0,'discountCents':0,'subtotalCents':0,'taxCents':0,'totalCents':0}:getAfter(/databases/$(database)/documents/organizations/$(companyId)/purchaseOrderRevisions/$(revisionId)/lines/$(string(d.index-1))).data.sums;
+            return d.sums.amountCents==previous.amountCents+d.line.amountCents && d.sums.discountCents==previous.discountCents+d.line.discountCents && d.sums.subtotalCents==previous.subtotalCents+d.line.subtotalCents && d.sums.taxCents==previous.taxCents+d.line.taxCents && d.sums.totalCents==previous.totalCents+d.line.totalCents;
+          }
+          allow read: if quoteReader();
+          allow create: if quoteEditor() && parentRevision().ownerUid==request.auth.uid && !parentRevision().sealed && request.resource.data.keys().hasOnly(['index','line','sums']) && request.resource.data.index is int && request.resource.data.index>=0 && lineId==string(request.resource.data.index) && validQuotationLine(request.resource.data.line) && request.resource.data.line.discountBps==0 && purchaseLink('items',request.resource.data.line.productId) && quoteSums(request.resource.data.sums) && accumulated(request.resource.data);
+          allow update,delete: if false;
+        }
+      }
+      function orderRevisionPublished(d,id) {
+        let path=/databases/$(database)/documents/organizations/$(companyId)/purchaseOrderRevisions/$(d.revisionId);
+        let rev=get(path).data;
+        let last=getAfter(/databases/$(database)/documents/organizations/$(companyId)/purchaseOrderRevisions/$(d.revisionId)/lines/$(string(d.lineCount-1))).data;
+        return rev.quoteId==id && rev.ownerUid==request.auth.uid && rev.sealed==false && getAfter(path).data.sealed==true && last.index==d.lineCount-1 && last.sums==d.totals;
+      }
+      function orderCondition(c) {
+        return c is map && c.keys().hasOnly(['date','deliveryDate','paymentDays','deliveryAddress','reference','comments','status']) && c.date is string && c.date.matches('^2026-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$') && c.deliveryDate is string && c.deliveryDate.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$') && c.deliveryDate>=c.date && c.paymentDays in [0,5,15,30,45,60,90,180] && c.deliveryAddress is string && c.deliveryAddress.size()<=300 && c.reference is string && c.reference.size()<=200 && c.comments is string && c.comments.size()<=2000 && c.status=='DRAFT';
+      }
+      match /purchaseOrderVersions/{id} {
+        function shape(d){return d.keys().hasOnly(['supplierId','supplierName','conditions','revisionId','lineCount','totals','version','auditId','updatedBy','updatedAt']) && purchaseLink('suppliers',d.supplierId) && d.supplierName is string && d.supplierName.size()<=200 && orderCondition(d.conditions) && d.revisionId is string && d.lineCount is int && d.lineCount>0 && quoteSums(d.totals);}
+        function original(d){let path=/databases/$(database)/documents/organizations/$(companyId)/purchaseRecords/$(id);return id.matches('^new_[a-f0-9-]{36}$') && (!exists(path) || (get(path).data.group=='purchaseOrders' && get(path).data.values.status=='DRAFT' && get(path).data.values.supplierId==d.supplierId && get(path).data.values.date==d.conditions.date));}
+        allow read: if quoteReader();
+        allow create: if quoteEditor() && shape(request.resource.data) && original(request.resource.data) && orderRevisionPublished(request.resource.data,id) && auditWrite(companyId,'purchaseOrderVersions',id,null);
+        allow update: if quoteEditor() && shape(request.resource.data) && request.resource.data.supplierId==resource.data.supplierId && request.resource.data.conditions.date==resource.data.conditions.date && orderRevisionPublished(request.resource.data,id) && auditWrite(companyId,'purchaseOrderVersions',id,resource.data);
+        allow delete: if false;
+      }

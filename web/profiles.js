@@ -1,3 +1,16 @@
+import {loadProductComposition} from './product-composition.js';
+import {saveProductionProduct,saveProductionOrder,loadProductionOrderLines} from './production-edit.js';
+import {loadQuotationDetail} from './quotation-revisions.js';
+import {savePurchaseOrder,approveOrder} from './purchase-orders.js';
+import {saveQuotationRevision} from './quotation-revisions.js';
+import {createCommercialQuotation,updateCommercialQuotation} from './commercial-quotation.js';
+import {saveCommercialRecord} from './commercial-record.js';
+import {saveCommercialAccount} from './commercial-account.js';
+import {savePurchaseEdit,createPurchaseRecord} from './purchase-edit.js';
+import {createDemandCache} from './demand-cache.js';
+import {loadLegacyProduction} from './legacy-production.js';
+import {loadLegacyPurchases} from './legacy-purchases.js';
+import {loadLegacyCommercial} from './legacy-commercial.js';
 import {modal,table,node,action,details} from './ui.js';
 import {createCustomerList} from './customer-list.js';
 import {auditedSet} from './audit.js';
@@ -26,8 +39,10 @@ export function normalizeCustomerSite(input,customerId) {
   for(const [key,max] of Object.entries(limits))if((key!=='phone'&&!value[key])||value[key].length>max)throw Error('Completa correctamente los datos de la sede.');
   return value;
 }
-export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
+export function setupProfiles({db, approvalAvailable=false, getUser, getRole, message, onBuyer}) {
   const root = document.querySelector('#profiles');
+  const demand=createDemandCache();
+  let legacyProduction=null,legacyCommercial=null,legacyPurchases=null;
   let company = '', companyName='', epoch = 0, customers = [], contacts=[], sites=[], editing = '', profile = null, loading = false;
   const companyForm = document.querySelector('#tax-form'), customerForm = root.querySelector('#customer-form');
   const vueCustomer=window.__sigmypCustomerDirectory;
@@ -74,7 +89,48 @@ export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
   const editCustomer=c=>{
     editing=c.id;fields(customerForm,c);customerForm.hidden=false;customerForm.elements.documentType.disabled=true;customerForm.elements.identification.readOnly=true;customerForm.querySelector('[type=submit]').textContent='Guardar cambios del cliente';customerModal.open('Editar cliente');customerForm.elements.name.focus();
   };
-  const directory=vueCustomer?{close:()=>vueCustomer.closeAll(),render:()=>vueCustomer.render({customers,contacts,sites,companyName,loading,canEdit:['platform','admin','billing'].includes(getRole())})}:createCustomerList(root.querySelector('#customer-list'),{onEdit:editCustomer});
+  const directory=vueCustomer?{close:()=>vueCustomer.closeAll(),render:()=>vueCustomer.render({customers,contacts,sites,companyName,loading,saveProduction,ensureProductionDetail,ensureWorkspace,ensureQuotationDetail,legacyCommercial,legacyProduction,legacyPurchases:legacyPurchases?{...legacyPurchases,approvalAvailable}:null,savePurchase,createPurchase,saveAccount,saveRecord,createQuotation,updateQuotation,canEditAccounts:['platform','admin'].includes(getRole()),canEdit:['platform','admin','billing'].includes(getRole())})}:createCustomerList(root.querySelector('#customer-list'),{onEdit:editCustomer});
+  async function saveAccount(account,input) {
+    if(!['platform','admin'].includes(getRole()))throw Error('Tu rol no permite actualizar cuentas.');
+    const current=epoch, companyId=company;
+    const found=legacyCommercial?.customers?.find(c=>c.id===account.id && c.sourceDocumentId===account.sourceDocumentId);
+    if((!found && !(account.sourceId===null && /^new_[a-f0-9-]{36}$/.test(account.id) && account.id===account.sourceDocumentId && !account.version)) || !legacyCommercial?.editsEnabled)throw Error('Vuelve a abrir la cuenta en la compañía activa.');
+    const saved=await saveCommercialAccount(db,companyId,account,input);
+    if(current!==epoch)throw Error('La cuenta se guardó en su compañía original; cambiaste de compañía durante el guardado.');
+    legacyCommercial={...legacyCommercial,customers:found?legacyCommercial.customers.map(c=>c.id===saved.id?saved:c):[...legacyCommercial.customers,saved]};
+    render();
+    return saved;
+  }
+  async function saveRecord(kind,record,input){
+    if(!['platform','admin'].includes(getRole()))throw Error('Tu rol no permite actualizar estos datos.');
+    const list=kind==='contacts'?'contacts':kind==='offices'?'sites':null,flag=kind==='contacts'?'contactEditsEnabled':'officeEditsEnabled';
+    const current=epoch,companyId=company;
+    const found=list&&legacyCommercial?.[list]?.some(item=>item.id===record.id&&item.sourceDocumentId===record.sourceDocumentId);
+    const native=record.sourceId===null&&/^new_[a-f0-9-]{36}$/.test(record.id)&&record.id===record.sourceDocumentId&&!record.version;
+    if(!list||!legacyCommercial?.[flag]||(!found&&!native))throw Error('Vuelve a abrir el registro en la compañía activa.');
+    const saved=await saveCommercialRecord(db,companyId,kind,record,input);
+    if(current!==epoch)throw Error('Se guardó en su compañía original; cambiaste de compañía durante el guardado.');
+    legacyCommercial={...legacyCommercial,[list]:found?legacyCommercial[list].map(item=>item.id===saved.id?saved:item):[...legacyCommercial[list],saved]};
+    if(kind==='contacts')legacyCommercial.sites=legacyCommercial.sites.map(site=>site.contactId===saved.id?{...site,contactName:saved.name}:site);
+    if(kind==='offices')saved.contactName=legacyCommercial.contacts.find(c=>c.id===saved.contactId)?.name||saved.contactName||'';
+    render();return saved;
+  }
+  async function updateQuotation(record,input){
+    if(!['platform','admin'].includes(getRole())||!legacyCommercial?.quotations.some(q=>q.id===record.id))throw Error('No tienes permiso para actualizar esta cotización.');
+    const current=epoch,companyId=company;
+    const saved=await saveQuotationRevision(db,companyId,record.id,record,input,legacyCommercial);
+    if(current!==epoch)throw Error('Se guardó en la compañía original; cambiaste de compañía durante el guardado.');
+    legacyCommercial={...legacyCommercial,quotations:legacyCommercial.quotations.map(q=>q.id===saved.id?saved:q)};render();return saved;
+  }
+  async function createQuotation(id,input){
+    if(!['platform','admin'].includes(getRole())||!legacyCommercial?.quotationCreatesEnabled)throw Error('No está habilitada la creación de cotizaciones.');
+    const current=epoch,companyId=company;
+    const account=legacyCommercial.customers.find(a=>a.id===input.customerId),contact=legacyCommercial.contacts.find(c=>c.id===input.contactId),office=input.officeId?legacyCommercial.sites.find(o=>o.id===input.officeId):null;
+    if(input.officeId&&!office)throw Error('Selecciona una oficina válida.');
+    const saved=await saveQuotationRevision(db,companyId,id,null,input,legacyCommercial);
+    if(current!==epoch)throw Error('Se guardó en su compañía original; cambiaste de compañía durante el guardado.');
+    legacyCommercial={...legacyCommercial,quotations:[...legacyCommercial.quotations.filter(q=>q.id!==saved.id),saved]};render();return saved;
+  }
   const path = () => ['organizations',company];
   function fields(form, data = {}) {
     form.reset();
@@ -96,9 +152,62 @@ export function setupProfiles({db, getUser, getRole, message, onBuyer}) {
     if(customers.some(c=>c.id===selected))chooser.value=selected;
     directory.render(customers,['platform','admin','billing'].includes(getRole()));
   }
+  async function ensureProductionDetail(record,group){
+    const id=company,current=epoch;
+    const saved=await demand.run('production:'+record.id+':'+(record.compositionRevision||record.revisionId),()=>group==='products'?loadProductComposition(db,id,record):loadProductionOrderLines(db,id,record));
+    if(current!==epoch||id!==company)throw Error('Cambió la compañía seleccionada.');return saved;
+  }
+  async function saveProduction(group,id,record,input){
+    if(!['platform','admin'].includes(getRole())||!legacyProduction?.writeEnabled||!['products','productionOrders'].includes(group))throw Error('El guardado no está habilitado para este usuario.');
+    if(record&&!legacyProduction[group]?.some(r=>r.id===id))throw Error('Vuelve a abrir el registro.');
+    const current=epoch,companyId=company;
+    const saved=group==='products'?await saveProductionProduct(db,companyId,id,record,input,legacyPurchases?.items||[]):await saveProductionOrder(db,companyId,id,record,input,legacyCommercial,legacyProduction.products);
+    if(current!==epoch||company!==companyId)throw Error('Guardado en la compañía original. Vuelve a abrirla.');
+    legacyProduction={...legacyProduction,[group]:[...legacyProduction[group].filter(r=>r.id!==id),saved]};render();return saved;
+  }
+  async function createPurchase(group,id,input){
+    if(!['platform','admin'].includes(getRole())||!legacyPurchases||!['suppliers','supplierContacts','items','purchaseOrders','kardex'].includes(group))throw Error('No tienes permiso para crear registros de Compras.');
+    const current=epoch,companyId=company,saved=group==='purchaseOrders'?await savePurchaseOrder(db,companyId,id,null,input,legacyPurchases):await createPurchaseRecord(db,companyId,group,id,input);
+    if(current!==epoch||company!==companyId)throw Error('El registro se guardó en su compañía original. Vuelve a abrirla para consultarlo.');
+    if(saved.supplierId&&!saved.orderData)saved.supplierName=legacyPurchases.suppliers.find(s=>s.id===saved.supplierId)?.name||'';
+    if(saved.secondSupplierId)saved.secondSupplierName=legacyPurchases.suppliers.find(s=>s.id===saved.secondSupplierId)?.name||'';
+    if(saved.itemId)saved.itemName=legacyPurchases.items.find(i=>i.id===saved.itemId)?.name||'';
+    legacyPurchases={...legacyPurchases,[group]:[...legacyPurchases[group].filter(r=>r.id!==id),saved]};render();return saved;
+  }
+  async function savePurchase(group,record,input){
+    if(!['platform','admin'].includes(getRole())||!legacyPurchases?.[group]?.some(r=>r.id===record.id))throw Error('No tienes permiso para editar este registro.');
+    if(input?.action==='approve'&&(group!=='purchaseOrders'||!approvalAvailable))throw Error('La aprobación todavía no está habilitada.');
+    if(group==='supplierContacts'&&!legacyPurchases.suppliers.some(s=>s.id===String(input.supplierId||'').trim()))throw Error('Selecciona un proveedor válido.');
+    const companyId=company,current=epoch;const saved=group==='purchaseOrders'?(input?.action==='approve'?await approveOrder(db,companyId,record):await savePurchaseOrder(db,companyId,record.id,record,input,legacyPurchases)):await savePurchaseEdit(db,companyId,group,record,input);
+    if(current!==epoch||company!==companyId)throw Error('El registro se guardó en su compañía original. Vuelve a abrirla para consultarlo.');
+    if(group==='supplierContacts')saved.supplierName=legacyPurchases.suppliers.find(s=>s.id===saved.supplierId)?.name||'';
+    legacyPurchases={...legacyPurchases,[group]:legacyPurchases[group].map(r=>r.id===saved.id?saved:r)};
+    if(group==='suppliers')for(const key of ['supplierContacts','items','purchaseOrders'])legacyPurchases[key]=legacyPurchases[key].map(r=>({...r,...(r.supplierId===saved.id&&!r.orderData?{supplierName:saved.name}:{}),...(r.secondSupplierId===saved.id?{secondSupplierName:saved.name}:{})}));
+    render();return saved;
+  }
+  async function ensureQuotationDetail(id){
+    const record=legacyCommercial?.quotations?.find(q=>q.id===id);if(!record)throw Error('Vuelve a abrir la cotización.');
+    if(!record.detailsPending)return record;
+    const current=epoch,companyId=company;
+    const saved=await demand.run('quotation:'+id+':'+record.revisionId,()=>loadQuotationDetail(db,companyId,record));
+    if(current!==epoch||companyId!==company)throw Error('Cambió la compañía seleccionada.');
+    legacyCommercial={...legacyCommercial,quotations:legacyCommercial.quotations.map(q=>q.id===id?saved:q)};render();return saved;
+  }
+  async function ensureWorkspace(module){
+    if(company!=='500123568'||!['platform','admin','viewer'].includes(getRole()))return;
+    const key=module==='sales'?'crm':module;
+    if(!['crm','purchases','production'].includes(key))return;
+    return demand.run(key,async()=>{
+      const id=company,current=epoch;
+      const set=value=>{if(current!==epoch||company!==id)return;if(key==='crm')legacyCommercial=value;else if(key==='purchases')legacyPurchases=value;else legacyProduction=value;render();};
+      set({loading:true});
+      try{const loader={crm:loadLegacyCommercial,purchases:loadLegacyPurchases,production:loadLegacyProduction}[key];set({...await loader(db,id),loading:false});}
+      catch(error){set({loading:false,error:error.code==='resource-exhausted'?'La cuota de consultas está agotada. Intenta más tarde.':error.code==='permission-denied'?'La consulta de este módulo está pendiente de habilitación.':'No se pudo cargar el módulo. Vuelve a abrir la compañía para reintentar.'});}
+    });
+  }
   async function load(id, name) {
     quickDialog.close();directory.close();customerModal.close();companyModal.close();
-    company = id; companyName=name||''; const current = ++epoch; profile = null; customers = [];contacts=[];sites=[]; loading=!!id;resetCustomer(); render();renderCompany();
+    demand.reset();legacyCommercial=null;legacyPurchases=null;legacyProduction=null; company = id; companyName=name||''; const current = ++epoch; profile = null; customers = [];contacts=[];sites=[]; loading=!!id;resetCustomer(); render();renderCompany();
     root.hidden = !id; chooser.closest('label').hidden = !id;
     if (!id) return;
     fields(companyForm,{ name, documentType:'NIT',identification:id });

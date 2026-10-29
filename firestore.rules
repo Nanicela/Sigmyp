@@ -151,6 +151,335 @@ service cloud.firestore {
           : !existsAfter(/databases/$(database)/documents/companyAssignments/$(email)));
     }
     match /organizations/{companyId} {
+      function nativeKey(id) { return id is string && id.matches('^new_[a-f0-9-]{36}$'); }
+      function commercialAccountLink(key,id) {
+        return key is string && id is string &&
+          (nativeKey(key) ? id == key && exists(/databases/$(database)/documents/organizations/$(companyId)/commercialAccounts/$(key)) :
+           key.matches('^[a-f0-9]{64}$') && id == 'legacy-account-' + string(get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/accounts/records/$(key)).data.data.id));
+      }
+      function commercialContactLink(key,id,accountId) {
+        return key is string && id is string &&
+          (nativeKey(key) ? id == key && get(/databases/$(database)/documents/organizations/$(companyId)/commercialContacts/$(key)).data.customerId == accountId :
+           key.matches('^[a-f0-9]{64}$') && id == 'legacy-contact-' + string(get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/contacts/records/$(key)).data.data.id) &&
+           accountId == 'legacy-account-' + string(get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/contacts/records/$(key)).data.data.account_id));
+      }
+      function commercialOfficeLink(key,id,contactKey,contactId) {
+        return key == '' && id == '' || (key is string && id is string &&
+          (nativeKey(key) ? id == key && get(/databases/$(database)/documents/organizations/$(companyId)/commercialOffices/$(key)).data.contactId == contactId :
+           key.matches('^[a-f0-9]{64}$') && id == 'legacy-office-' + string(get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/offices/records/$(key)).data.data.id) &&
+           get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/offices/records/$(key)).data.data.contact_id == get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/contacts/records/$(contactKey)).data.data.id));
+      }
+
+      match /commercialContacts/{id} {
+        function validRecord(d) { return d.keys().hasOnly(['name', 'jobTitle', 'phone1', 'phone2', 'mobile', 'email', 'comments', 'sourceId', 'sourceDocumentId', 'createdAt', 'version', 'auditId', 'updatedBy', 'updatedAt','customerId','accountDocumentId']) &&
+          d.sourceDocumentId == id && ((d.sourceId == null && nativeKey(id) && commercialAccountLink(d.accountDocumentId,d.customerId)) || (id.matches('^[a-f0-9]{64}$') && d.sourceId is int && get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/contacts/records/$(id)).data.data.id == d.sourceId && !d.keys().hasAny(['customerId', 'accountDocumentId']))) &&
+          shortText(d.name,200) &&
+          d.name is string && d.name.size() <= 200 &&
+          d.jobTitle is string && d.jobTitle.size() <= 200 &&
+          d.phone1 is string && d.phone1.size() <= 40 &&
+          d.phone1.matches('^[0-9]*$') &&
+          d.phone2 is string && d.phone2.size() <= 40 &&
+          d.phone2.matches('^[0-9]*$') &&
+          d.mobile is string && d.mobile.size() <= 40 &&
+          d.mobile.matches('^[0-9]*$') &&
+          d.email is string && d.email.size() <= 254 &&
+          (d.email == '' || d.email.matches('^[^ @]+@[^ @]+[.][^ @]+$')) &&
+          d.comments is string && d.comments.size() <= 4000 &&
+          d.createdAt is timestamp; }
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow create: if companyId == '500123568' && orgAccess(companyId,['admin']) && validRecord(request.resource.data) && request.resource.data.createdAt == request.time && auditWrite(companyId,'commercialContacts',id,null);
+        allow update: if companyId == '500123568' && orgAccess(companyId,['admin']) && validRecord(request.resource.data) && request.resource.data.sourceId == resource.data.sourceId && request.resource.data.createdAt == resource.data.createdAt  && (resource.data.sourceId != null || (request.resource.data.customerId == resource.data.customerId && request.resource.data.accountDocumentId == resource.data.accountDocumentId)) && auditWrite(companyId,'commercialContacts',id,resource.data);
+        allow delete: if false;
+      }
+      match /commercialOffices/{id} {
+        function validRecord(d) { return d.keys().hasOnly(['name', 'type', 'address', 'municipality', 'department', 'phone1', 'phone2', 'email', 'technicianName', 'technicianPhone', 'technicianEmail', 'comments', 'sourceId', 'sourceDocumentId', 'createdAt', 'version', 'auditId', 'updatedBy', 'updatedAt','customerId','accountDocumentId','contactId','contactDocumentId']) &&
+          d.sourceDocumentId == id && ((d.sourceId == null && nativeKey(id) && commercialAccountLink(d.accountDocumentId,d.customerId) && commercialContactLink(d.contactDocumentId,d.contactId,d.customerId)) || (id.matches('^[a-f0-9]{64}$') && d.sourceId is int && get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/offices/records/$(id)).data.data.id == d.sourceId && !d.keys().hasAny(['customerId', 'accountDocumentId', 'contactId', 'contactDocumentId']))) &&
+          shortText(d.name,200) &&
+          d.name is string && d.name.size() <= 200 &&
+          d.type is string && d.type.size() <= 120 &&
+          d.address is string && d.address.size() <= 300 &&
+          d.municipality is string && d.municipality.size() <= 120 &&
+          d.department is string && d.department.size() <= 120 &&
+          d.phone1 is string && d.phone1.size() <= 40 &&
+          d.phone1.matches('^[0-9]*$') &&
+          d.phone2 is string && d.phone2.size() <= 40 &&
+          d.phone2.matches('^[0-9]*$') &&
+          d.email is string && d.email.size() <= 254 &&
+          (d.email == '' || d.email.matches('^[^ @]+@[^ @]+[.][^ @]+$')) &&
+          d.technicianName is string && d.technicianName.size() <= 200 &&
+          d.technicianPhone is string && d.technicianPhone.size() <= 40 &&
+          d.technicianPhone.matches('^[0-9]*$') &&
+          d.technicianEmail is string && d.technicianEmail.size() <= 254 &&
+          (d.technicianEmail == '' || d.technicianEmail.matches('^[^ @]+@[^ @]+[.][^ @]+$')) &&
+          d.comments is string && d.comments.size() <= 4000 &&
+          d.createdAt is timestamp; }
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow create: if companyId == '500123568' && orgAccess(companyId,['admin']) && validRecord(request.resource.data) && request.resource.data.createdAt == request.time && auditWrite(companyId,'commercialOffices',id,null);
+        allow update: if companyId == '500123568' && orgAccess(companyId,['admin']) && validRecord(request.resource.data) && request.resource.data.sourceId == resource.data.sourceId && request.resource.data.createdAt == resource.data.createdAt  && (resource.data.sourceId != null || (request.resource.data.customerId == resource.data.customerId && request.resource.data.accountDocumentId == resource.data.accountDocumentId && request.resource.data.contactId == resource.data.contactId && request.resource.data.contactDocumentId == resource.data.contactDocumentId)) && auditWrite(companyId,'commercialOffices',id,resource.data);
+        allow delete: if false;
+      }
+
+      function validQuotationEdit(q) {
+        return q.validUntil is int && q.validUntil >= q.date && q.lines is list && q.lines.size()>0 && q.lines.size()<=3 && validQuotationLine(q.lines[0]) &&
+          q.taxCents is int && q.taxCents == quotationSum(q.lines,'taxCents') && q.totalCents is int && q.totalCents == quotationSum(q.lines,'totalCents') &&
+          q.paymentMethod is string && q.paymentMethod.size()<=2000 && q.warranty is string && q.warranty.size()<=2000 &&
+          q.deliveryTime is string && q.deliveryTime.size()<=2000 && q.comments is string && q.comments.size()<=2000;
+      }
+      // Scalable quotation revisions: immutable line chain, atomic publication.
+      function quoteEditor() { return companyId == '500123568' && orgAccess(companyId,['admin']) && registered(); }
+      function quoteReader() { return companyId == '500123568' && orgAccess(companyId,['admin','viewer']); }
+      function quoteSums(s) { return s is map && s.keys().hasOnly(['amountCents','discountCents','subtotalCents','taxCents','totalCents']) && s.amountCents is int && s.discountCents is int && s.subtotalCents is int && s.taxCents is int && s.totalCents is int && s.amountCents>=0 && s.discountCents>=0 && s.subtotalCents>=0 && s.taxCents>=0 && s.totalCents>=0 && s.amountCents<=9007199254740991 && s.totalCents<=9007199254740991; }
+      function quoteCondition(c) { return c is map && c.keys().hasOnly(['letter','warranty','paymentMethod','comments','purchaseOrder','deliveryDays','deliveryUnit','validityDays','validityUnit','status']) && c.letter is string && c.letter.size()<=10000 && c.warranty is string && c.warranty.size()<=2000 && c.paymentMethod is string && c.paymentMethod.size()<=2000 && c.comments is string && c.comments.size()<=2000 && c.purchaseOrder is string && c.purchaseOrder.size()<=200 && c.deliveryDays is int && c.deliveryDays>=0 && c.deliveryDays<=36500 && c.validityDays is int && c.validityDays>=0 && c.validityDays<=36500 && c.deliveryUnit in ['CALENDAR_DAYS','WORKING_DAYS'] && c.validityUnit in ['CALENDAR_DAYS','WORKING_DAYS'] && c.status in ['CREATED','SENT','APPROVED','REJECTED']; }
+      match /commercialQuotationRevisions/{revisionId} {
+        allow read: if quoteReader();
+        allow create: if quoteEditor() && request.resource.data.keys().hasOnly(['quoteId','ownerUid','sealed','createdAt']) && request.resource.data.quoteId is string && request.resource.data.quoteId.size()>0 && request.resource.data.quoteId.size()<=100 && request.resource.data.ownerUid==request.auth.uid && request.resource.data.sealed==false && request.resource.data.createdAt==request.time;
+        allow update: if quoteEditor() && resource.data.ownerUid==request.auth.uid && resource.data.sealed==false && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sealed']) && request.resource.data.sealed==true && getAfter(/databases/$(database)/documents/organizations/$(companyId)/commercialQuotationVersions/$(resource.data.quoteId)).data.revisionId==revisionId;
+        allow delete: if false;
+        match /lines/{lineId} {
+          function parentRevision(){return get(/databases/$(database)/documents/organizations/$(companyId)/commercialQuotationRevisions/$(revisionId)).data;}
+          function accumulated(d) {
+            let previous=d.index==0?{'amountCents':0,'discountCents':0,'subtotalCents':0,'taxCents':0,'totalCents':0}:getAfter(/databases/$(database)/documents/organizations/$(companyId)/commercialQuotationRevisions/$(revisionId)/lines/$(string(d.index-1))).data.sums;
+            return d.sums.amountCents==previous.amountCents+d.line.amountCents && d.sums.discountCents==previous.discountCents+d.line.discountCents && d.sums.subtotalCents==previous.subtotalCents+d.line.subtotalCents && d.sums.taxCents==previous.taxCents+d.line.taxCents && d.sums.totalCents==previous.totalCents+d.line.totalCents;
+          }
+          allow read: if quoteReader();
+          allow create: if quoteEditor() && parentRevision().ownerUid==request.auth.uid && !parentRevision().sealed && request.resource.data.keys().hasOnly(['index','line','sums']) && request.resource.data.index is int && request.resource.data.index>=0 && lineId==string(request.resource.data.index) && validQuotationLine(request.resource.data.line) && quoteSums(request.resource.data.sums) && accumulated(request.resource.data);
+          allow update,delete: if false;
+        }
+      }
+      function quoteRevisionPublished(d,id) {
+        let path=/databases/$(database)/documents/organizations/$(companyId)/commercialQuotationRevisions/$(d.revisionId);
+        let rev=get(path).data;
+        let last=getAfter(/databases/$(database)/documents/organizations/$(companyId)/commercialQuotationRevisions/$(d.revisionId)/lines/$(string(d.lineCount-1))).data;
+        return rev.quoteId==id && rev.ownerUid==request.auth.uid && rev.sealed==false && getAfter(path).data.sealed==true && last.index==d.lineCount-1 && last.sums==d.totals;
+      }
+      function quoteRevisionLinks(l) {
+        return l is map && l.keys().hasOnly(['customerId','accountDocumentId','contactId','contactDocumentId','officeId','officeDocumentId','approverContactId','approverDocumentId']) && commercialAccountLink(l.accountDocumentId,l.customerId) && commercialContactLink(l.contactDocumentId,l.contactId,l.customerId) && commercialOfficeLink(l.officeDocumentId,l.officeId,l.contactDocumentId,l.contactId) && ((l.approverContactId=='' && l.approverDocumentId=='') || commercialContactLink(l.approverDocumentId,l.approverContactId,l.customerId));
+      }
+      function quoteRevisionAudit(d) {
+        return quoteCondition(d.conditions) && quoteRevisionLinks(d.links) && d.snapshot is map && d.snapshot.keys().hasOnly(['accountName','contactName','officeName','approverName']) && d.snapshot.accountName is string && d.snapshot.accountName.size()<=1000 && d.snapshot.contactName is string && d.snapshot.contactName.size()<=1000 && d.snapshot.officeName is string && d.snapshot.officeName.size()<=1000 && d.snapshot.approverName is string && d.snapshot.approverName.size()<=1000;
+      }
+      match /commercialQuotationVersions/{id} {
+        function shape(d) { return d.keys().hasOnly(['sourceKind','sourceDocumentId','sourceId','number','date','year','sequence','links','snapshot','conditions','revisionId','lineCount','totals','version','auditId','updatedBy','updatedAt']) && d.sourceKind in ['NEW','IMPORTED','NATIVE'] && d.sourceDocumentId is string && d.sourceId is int && d.number is string && d.number.size()<=100 && d.date is int && d.year is int && d.year==timestamp.value(d.date).year() && d.sequence is int && d.sequence>=0 && d.revisionId is string && d.lineCount is int && d.lineCount>0 && quoteSums(d.totals); }
+        function original(d) {
+          return (d.sourceKind=='IMPORTED' && id=='legacy-quotation-'+string(d.sourceId) && get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/quotations/records/$(d.sourceDocumentId)).data.data.id==d.sourceId) ||
+            (d.sourceKind=='NATIVE' && id==d.sourceDocumentId && exists(/databases/$(database)/documents/organizations/$(companyId)/commercialQuotations/$(id))) ||
+            (d.sourceKind=='NEW' && nativeKey(id) && !exists(/databases/$(database)/documents/organizations/$(companyId)/commercialQuotations/$(id)) && d.sourceDocumentId=='' && d.sourceId==0 && d.year==(request.time-duration.value(5,'h')).year() && d.number=='COT-'+string(d.year)+'-V2-'+string(d.sequence) && getAfter(/databases/$(database)/documents/organizations/$(companyId)/commercialQuotationCountersV2/$(string(d.year))).data.quoteId==id && getAfter(/databases/$(database)/documents/organizations/$(companyId)/commercialQuotationCountersV2/$(string(d.year))).data.last==d.sequence);
+        }
+        allow read: if quoteReader();
+        allow create: if quoteEditor() && shape(request.resource.data) && original(request.resource.data) && quoteRevisionPublished(request.resource.data,id) && auditWrite(companyId,'commercialQuotationVersions',id,null);
+        allow update: if quoteEditor() && shape(request.resource.data) && request.resource.data.sourceKind==resource.data.sourceKind && request.resource.data.sourceDocumentId==resource.data.sourceDocumentId && request.resource.data.sourceId==resource.data.sourceId && request.resource.data.number==resource.data.number && request.resource.data.date==resource.data.date && request.resource.data.sequence==resource.data.sequence && quoteRevisionPublished(request.resource.data,id) && auditWrite(companyId,'commercialQuotationVersions',id,resource.data);
+        allow delete: if false;
+      }
+      match /commercialQuotationCountersV2/{year} {
+        function validCounter(){let d=request.resource.data;let q=getAfter(/databases/$(database)/documents/organizations/$(companyId)/commercialQuotationVersions/$(d.quoteId)).data;return d.keys().hasOnly(['last','quoteId','updatedAt']) && d.last is int && d.updatedAt==request.time && !exists(/databases/$(database)/documents/organizations/$(companyId)/commercialQuotationVersions/$(d.quoteId)) && q.sourceKind=='NEW' && q.sequence==d.last && string(q.year)==year;}
+        allow read: if quoteEditor();
+        allow create: if quoteEditor() && request.resource.data.last==1 && validCounter();
+        allow update: if quoteEditor() && request.resource.data.last==resource.data.last+1 && validCounter();
+        allow delete: if false;
+      }
+
+      function validImportedPricing(q) {
+        return q is map && q.keys().hasOnly(['lines','amountCents','discountCents','subtotalCents','taxCents','totalCents']) &&
+          q.lines is list && q.lines.size()>0 && q.lines.size()<=3 && validQuotationLine(q.lines[0]) &&
+          q.taxCents is int && q.taxCents == quotationSum(q.lines,'taxCents') && q.totalCents is int && q.totalCents == quotationSum(q.lines,'totalCents');
+      }
+      match /commercialQuotationEdits/{id} {
+        function validEdit() {
+          let d=request.resource.data;
+          return d.keys().hasOnly(['pricing','sourceId','sourceDocumentId','paymentMethod','warranty','deliveryTime','comments','version','auditId','updatedBy','updatedAt']) &&
+            (!('pricing' in d) || validImportedPricing(d.pricing)) && d.sourceDocumentId == id && d.sourceId is int && get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/quotations/records/$(id)).data.data.id == d.sourceId &&
+            d.paymentMethod is string && d.paymentMethod.size()<=2000 && d.warranty is string && d.warranty.size()<=2000 && d.deliveryTime is string && d.deliveryTime.size()<=2000 && d.comments is string && d.comments.size()<=2000;
+        }
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow create: if companyId == '500123568' && orgAccess(companyId,['admin']) && validEdit() && auditWrite(companyId,'commercialQuotationEdits',id,null);
+        allow update: if companyId == '500123568' && orgAccess(companyId,['admin']) && validEdit() && auditWrite(companyId,'commercialQuotationEdits',id,resource.data);
+        allow delete: if false;
+      }
+      function validQuotationLine(l) {
+        return l.keys().hasOnly(['productId','code','description','quantityUnits','unitPriceCents','discountBps','rate','amountCents','discountCents','subtotalCents','taxCents','totalCents']) && (!('productId' in l) || (l.productId is string && l.productId.size()<=100)) && (!('code' in l) || (l.code is string && l.code.size()<=100)) && shortText(l.description,500) &&
+          l.quantityUnits is int && l.quantityUnits > 0 && l.quantityUnits <= 1000000000 && l.unitPriceCents is int && l.unitPriceCents >= 0 && l.unitPriceCents <= 1000000000 && l.quantityUnits * l.unitPriceCents <= 10000000000000 &&
+          l.discountBps is int && l.discountBps >= 0 && l.discountBps <= 10000 && l.rate in [0,5,19] &&
+          l.amountCents is int && l.amountCents == int((l.quantityUnits * l.unitPriceCents + 500) / 1000) &&
+          l.discountCents is int && l.discountCents == int((l.amountCents * l.discountBps + 5000) / 10000) &&
+          l.subtotalCents is int && l.subtotalCents == l.amountCents - l.discountCents &&
+          l.taxCents is int && l.taxCents == int((l.subtotalCents * l.rate + 50) / 100) &&
+          l.totalCents is int && l.totalCents == l.subtotalCents + l.taxCents;
+      }
+      function quotationValue(lines,index,key) { return lines.size() > index ? lines[index][key] : 0; }
+      function quotationSum(lines,key) { return quotationValue(lines,0,key) + quotationValue(lines,1,key) + quotationValue(lines,2,key); }
+      function validNewQuotation(q) { return q.keys().hasOnly(['date', 'validUntil', 'businessYear', 'lines', 'amountCents', 'discountCents', 'subtotalCents', 'taxCents', 'totalCents', 'currency', 'status', 'schemaVersion', 'paymentMethod', 'warranty', 'deliveryTime', 'comments', 'customerId', 'accountDocumentId', 'contactId', 'contactDocumentId', 'officeId', 'officeDocumentId', 'snapshot', 'companyId', 'sequence', 'number', 'createdAt', 'createdBy', 'version', 'auditId', 'updatedBy', 'updatedAt']) &&
+          q.companyId == companyId &&
+          q.schemaVersion == 1 &&
+          q.currency == 'COP' &&
+          q.status == 'CREATED' &&
+          q.createdAt == request.time &&
+          q.createdBy == request.auth.uid &&
+          q.date is int &&
+          q.validUntil is int &&
+          q.validUntil >= q.date &&
+          q.businessYear is int &&
+          q.businessYear == (request.time - duration.value(5,'h')).year() &&
+          timestamp.value(q.date).year() == q.businessYear &&
+          q.sequence is int && q.sequence > 0 && q.sequence <= 1000000000 &&
+          q.number == 'COT-'+string(q.businessYear)+'-'+string(q.sequence) &&
+          q.lines is list && q.lines.size()>0 && q.lines.size()<=3 &&
+          (q.lines.size()<=0 || validQuotationLine(q.lines[0])) &&
+          q.taxCents is int && q.taxCents == quotationSum(q.lines,'taxCents') &&
+          q.totalCents is int && q.totalCents == quotationSum(q.lines,'totalCents') &&
+          true; }
+      match /commercialQuotations/{id} {
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow create: if companyId == '500123568' && orgAccess(companyId,['admin']) && nativeKey(id) && validNewQuotation(request.resource.data) &&
+          getAfter(/databases/$(database)/documents/organizations/$(companyId)/commercialCounters/$('quotations-'+string(request.resource.data.businessYear))).data.last == request.resource.data.sequence &&
+          getAfter(/databases/$(database)/documents/organizations/$(companyId)/commercialCounters/$('quotations-'+string(request.resource.data.businessYear))).data.lastQuotationId == id &&
+          auditWrite(companyId,'commercialQuotations',id,null);
+        allow update: if companyId == '500123568' && orgAccess(companyId,['admin']) && resource.data.status == 'CREATED' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['validUntil','lines','amountCents','discountCents','subtotalCents','taxCents','totalCents','paymentMethod','warranty','deliveryTime','comments','version','auditId','updatedBy','updatedAt']) &&
+          validQuotationEdit(request.resource.data) && auditWrite(companyId,'commercialQuotations',id,resource.data);
+        allow delete: if false;
+      }
+      match /commercialCounters/{id} {
+        function validCounter() {
+          let d=request.resource.data;
+          let q=getAfter(/databases/$(database)/documents/organizations/$(companyId)/commercialQuotations/$(d.lastQuotationId)).data;
+          return d.keys().hasOnly(['last','lastQuotationId','updatedAt']) && d.last is int && d.updatedAt == request.time && nativeKey(d.lastQuotationId) &&
+            id == 'quotations-'+string(q.businessYear) && q.sequence == d.last && q.createdAt == request.time && q.createdBy == request.auth.uid && q.version == 1 && q.paymentMethod is string && q.paymentMethod.size() <= 2000 &&
+          q.warranty is string && q.warranty.size() <= 2000 &&
+          q.deliveryTime is string && q.deliveryTime.size() <= 2000 &&
+          q.comments is string && q.comments.size() <= 2000 &&
+          q.snapshot is map && q.snapshot.keys().hasOnly(['accountName', 'identification', 'accountEmail', 'address', 'city', 'contactName', 'contactEmail', 'contactPhone', 'officeName']) &&
+          q.snapshot.accountName is string && q.snapshot.accountName.size()<=1000 &&
+          q.snapshot.identification is string && q.snapshot.identification.size()<=1000 &&
+          q.snapshot.accountEmail is string && q.snapshot.accountEmail.size()<=1000 &&
+          q.snapshot.address is string && q.snapshot.address.size()<=1000 &&
+          q.snapshot.city is string && q.snapshot.city.size()<=1000 &&
+          q.snapshot.contactName is string && q.snapshot.contactName.size()<=1000 &&
+          q.snapshot.contactEmail is string && q.snapshot.contactEmail.size()<=1000 &&
+          q.snapshot.contactPhone is string && q.snapshot.contactPhone.size()<=1000 &&
+          q.snapshot.officeName is string && q.snapshot.officeName.size()<=1000 && commercialAccountLink(q.accountDocumentId,q.customerId) && commercialContactLink(q.contactDocumentId,q.contactId,q.customerId) && commercialOfficeLink(q.officeDocumentId,q.officeId,q.contactDocumentId,q.contactId);
+        }
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin']);
+        allow create: if companyId == '500123568' && orgAccess(companyId,['admin']) && request.resource.data.last == 1 && validCounter();
+        allow update: if companyId == '500123568' && orgAccess(companyId,['admin']) && request.resource.data.last == resource.data.last + 1 && validCounter();
+        allow delete: if false;
+      }
+
+      function quotationAuditDetails(q) { return (q.lines.size()<=1 || validQuotationLine(q.lines[1])) && (q.lines.size()<=2 || validQuotationLine(q.lines[2])) && q.amountCents is int && q.amountCents == q.subtotalCents + q.discountCents && q.discountCents is int && q.discountCents == quotationSum(q.lines,'discountCents') && q.subtotalCents is int && q.subtotalCents == q.totalCents - q.taxCents; }
+
+      // Editable commercial projection. The imported source remains immutable.
+      match /commercialAccounts/{id} {
+        function validAccount(d) {
+          return d.keys().hasOnly(['identification','name','phone1','phone2','email','billingEmail','website','address','municipality','department','status','personType','vatResponsible','sourceId','sourceDocumentId','createdAt','version','auditId','updatedBy','updatedAt']) &&
+            d.sourceDocumentId == id &&
+            ((d.sourceId == null && id.matches('^new_[a-f0-9-]{36}$')) ||
+             (id.matches('^[a-f0-9]{64}$') && d.sourceId is int &&
+              get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/accounts/records/$(id)).data.data.id == d.sourceId)) &&
+            shortText(d.name,200) &&
+            d.identification is string && d.identification.size() <= 40 &&
+            d.phone1 is string && d.phone1.size() <= 40 && d.phone2 is string && d.phone2.size() <= 40 &&
+            d.email is string && d.email.size() <= 254 && (d.email == '' || d.email.matches('^[^ @]+@[^ @]+[.][^ @]+$')) &&
+            d.billingEmail is string && d.billingEmail.size() <= 254 && (d.billingEmail == '' || d.billingEmail.matches('^[^ @]+@[^ @]+[.][^ @]+$')) &&
+            d.website is string && d.website.size() <= 500 && d.address is string && d.address.size() <= 300 &&
+            d.municipality is string && d.municipality.size() <= 120 && d.department is string && d.department.size() <= 120 &&
+            d.status in ['NEW','QUOTED','ACTIVE','INACTIVE'] && d.personType in ['NATURAL','JURIDICA'] &&
+            (d.vatResponsible == null || d.vatResponsible is bool) && d.createdAt is timestamp;
+        }
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow create: if companyId == '500123568' && orgAccess(companyId,['admin']) &&
+          validAccount(request.resource.data) && request.resource.data.createdAt == request.time &&
+          auditWrite(companyId,'commercialAccounts',id,null);
+        allow update: if companyId == '500123568' && orgAccess(companyId,['admin']) &&
+          validAccount(request.resource.data) &&
+          request.resource.data.sourceId == resource.data.sourceId &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          auditWrite(companyId,'commercialAccounts',id,resource.data);
+        allow delete: if false;
+      }
+
+      // Commercial import is read-only; private personnel/assets remain denied.
+      match /commercialQuotationDetails/{id} {
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow write: if false;
+      }
+
+      function purchaseLink(group,id) {
+        return id is string && (exists(/databases/$(database)/documents/organizations/$(companyId)/purchaseImports/$(group)/records/$(id)) ||
+          (exists(/databases/$(database)/documents/organizations/$(companyId)/purchaseRecords/$(id)) && get(/databases/$(database)/documents/organizations/$(companyId)/purchaseRecords/$(id)).data.group==group));
+      }
+      function validPurchaseFields(g,v,creation) { return v is map && ((g == 'suppliers' && v.keys().hasOnly(creation ? ['identification', 'name', 'phone1', 'phone2', 'email', 'website', 'address', 'city', 'certified', 'creditType', 'creditAmount', 'evaluation'] : ['identification', 'name', 'phone1', 'phone2', 'email', 'website', 'address', 'city', 'certified', 'creditType', 'creditAmount']) && v.identification is string && v.identification.size()<=40 && v.name is string && v.name.size()<=200 && v.phone1 is string && v.phone1.size()<=40 && v.phone2 is string && v.phone2.size()<=40 && v.email is string && v.email.size()<=254 && v.website is string && v.website.size()<=500 && v.address is string && v.address.size()<=300 && v.city is string && v.city.size()<=120 && v.certified is string && v.certified.size()<=200 && v.creditType is string && v.creditType.size()<=200 && v.creditAmount is string && v.creditAmount.size()<=30 && v.name.size()>0 && (v.email == '' || v.email.matches('^[^ @]+@[^ @]+[.][^ @]+$')) && (v.creditAmount == '' || v.creditAmount.matches('^[0-9]{1,15}([.][0-9]{1,2})?$')) && (!creation || (v.evaluation == '1'))) ||
+          (g == 'supplierContacts' && v.keys().hasOnly(['name', 'position', 'phone1', 'phone2', 'mobile', 'email', 'comments', 'supplierId']) && v.name is string && v.name.size()<=200 && v.position is string && v.position.size()<=200 && v.phone1 is string && v.phone1.size()<=40 && v.phone2 is string && v.phone2.size()<=40 && v.mobile is string && v.mobile.size()<=40 && v.email is string && v.email.size()<=254 && v.comments is string && v.comments.size()<=2000 && v.name.size()>0 && (v.phone1 == '' || v.phone1.matches('^[0-9]+$')) && (v.phone2 == '' || v.phone2.matches('^[0-9]+$')) && (v.mobile == '' || v.mobile.matches('^[0-9]+$')) && (v.email == '' || v.email.matches('^[^ @]+@[^ @]+[.][^ @]+$')) && ((!creation && !('supplierId' in v)) || (v.supplierId is string && v.supplierId.size()<=100 && purchaseLink('suppliers',v.supplierId)))) ||
+          (g == 'items' && v.keys().hasOnly(creation ? ['code', 'name', 'unit', 'category', 'location', 'description', 'supplierId', 'secondSupplierId'] : ['code', 'name', 'unit', 'category', 'location', 'description']) && v.code is string && v.code.size()<=100 && v.name is string && v.name.size()<=200 && v.unit is string && v.unit.size()<=120 && v.category is string && v.category.size()<=200 && v.location is string && v.location.size()<=300 && v.description is string && v.description.size()<=4000 && v.name.size()>0 && (!creation || ((v.supplierId == '' || purchaseLink('suppliers',v.supplierId)) && (v.secondSupplierId == '' || purchaseLink('suppliers',v.secondSupplierId))))) ||
+          (g == 'purchaseOrders' && v.keys().hasOnly(creation ? ['paymentMethod', 'deliveryAddress', 'comments', 'supplierId', 'date', 'reference', 'status'] : ['paymentMethod', 'deliveryAddress', 'comments']) && v.paymentMethod is string && v.paymentMethod.size()<=2000 && v.deliveryAddress is string && v.deliveryAddress.size()<=300 && v.comments is string && v.comments.size()<=2000 && (!creation || (purchaseLink('suppliers',v.supplierId) && v.date is string && v.date.matches('^2026-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$') && v.reference is string && v.reference.size()<=200 && v.status=='DRAFT'))) ||
+          (g == 'kardex' && v.keys().hasOnly(creation ? ['comments', 'itemId', 'date', 'movement', 'quantity', 'status'] : ['comments']) && v.comments is string && v.comments.size()<=2000 && (!creation || (v.date is string && v.date.matches('^2026-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$') && purchaseLink('items',v.itemId) && v.movement in ['ENTRY','EXIT'] && v.quantity is number && v.quantity>0 && v.quantity<=1000000000 && v.status=='PENDING')))); }
+      match /purchaseRecords/{id} {
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow create: if companyId == '500123568' && orgAccess(companyId,['admin']) && id.matches('^new_[a-f0-9-]{36}$') && request.resource.data.keys().hasOnly(['group','values','version','auditId','updatedAt','updatedBy']) && validPurchaseFields(request.resource.data.group,request.resource.data.values,true) && auditWrite(companyId,'purchaseRecords',id,null);
+        allow update,delete: if false;
+      }
+      match /purchaseEdits/{id} {
+        function validEdit(d) {
+          return d.keys().hasOnly(['group','recordId','values','version','auditId','updatedAt','updatedBy']) && d.group is string && d.recordId is string &&
+            id == d.group + '_' + d.recordId && validPurchaseFields(d.group,d.values,false) && purchaseLink(d.group,d.recordId);
+        }
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow create: if companyId == '500123568' && orgAccess(companyId,['admin']) && validEdit(request.resource.data) && auditWrite(companyId,'purchaseEdits',id,null);
+        allow update: if companyId == '500123568' && orgAccess(companyId,['admin']) && validEdit(request.resource.data) && request.resource.data.group == resource.data.group && request.resource.data.recordId == resource.data.recordId && auditWrite(companyId,'purchaseEdits',id,resource.data);
+        allow delete: if false;
+      }
+
+      match /purchaseImports/{group} {
+        allow read: if group == 'manifest' && companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow write: if false;
+        match /records/{recordId} {
+          allow read: if group in ['suppliers','supplierContacts','purchaseOrders','items','kardex'] && companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+          allow write: if false;
+        }
+      }
+
+      match /purchaseOrderRevisions/{revisionId} {
+        allow read: if quoteReader();
+        allow create: if quoteEditor() && request.resource.data.keys().hasOnly(['quoteId','ownerUid','sealed','createdAt']) && request.resource.data.quoteId is string && request.resource.data.quoteId.size()>0 && request.resource.data.quoteId.size()<=100 && request.resource.data.ownerUid==request.auth.uid && request.resource.data.sealed==false && request.resource.data.createdAt==request.time;
+        allow update: if quoteEditor() && resource.data.ownerUid==request.auth.uid && resource.data.sealed==false && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sealed']) && request.resource.data.sealed==true && getAfter(/databases/$(database)/documents/organizations/$(companyId)/purchaseOrderVersions/$(resource.data.quoteId)).data.revisionId==revisionId;
+        allow delete: if false;
+        match /lines/{lineId} {
+          function parentRevision(){return get(/databases/$(database)/documents/organizations/$(companyId)/purchaseOrderRevisions/$(revisionId)).data;}
+          function accumulated(d) {
+            let previous=d.index==0?{'amountCents':0,'discountCents':0,'subtotalCents':0,'taxCents':0,'totalCents':0}:getAfter(/databases/$(database)/documents/organizations/$(companyId)/purchaseOrderRevisions/$(revisionId)/lines/$(string(d.index-1))).data.sums;
+            return d.sums.amountCents==previous.amountCents+d.line.amountCents && d.sums.discountCents==previous.discountCents+d.line.discountCents && d.sums.subtotalCents==previous.subtotalCents+d.line.subtotalCents && d.sums.taxCents==previous.taxCents+d.line.taxCents && d.sums.totalCents==previous.totalCents+d.line.totalCents;
+          }
+          allow read: if quoteReader();
+          allow create: if quoteEditor() && parentRevision().ownerUid==request.auth.uid && !parentRevision().sealed && request.resource.data.keys().hasOnly(['index','line','sums']) && request.resource.data.index is int && request.resource.data.index>=0 && lineId==string(request.resource.data.index) && validQuotationLine(request.resource.data.line) && request.resource.data.line.discountBps==0 && purchaseLink('items',request.resource.data.line.productId) && quoteSums(request.resource.data.sums) && accumulated(request.resource.data);
+          allow update,delete: if false;
+        }
+      }
+      function orderRevisionPublished(d,id) {
+        let path=/databases/$(database)/documents/organizations/$(companyId)/purchaseOrderRevisions/$(d.revisionId);
+        let rev=get(path).data;
+        let last=getAfter(/databases/$(database)/documents/organizations/$(companyId)/purchaseOrderRevisions/$(d.revisionId)/lines/$(string(d.lineCount-1))).data;
+        return rev.quoteId==id && rev.ownerUid==request.auth.uid && rev.sealed==false && getAfter(path).data.sealed==true && last.index==d.lineCount-1 && last.sums==d.totals;
+      }
+      function orderCondition(c) {
+        return c is map && c.keys().hasOnly(['date','deliveryDate','paymentDays','deliveryAddress','reference','comments','status']) && c.date is string && c.date.matches('^2026-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$') && c.deliveryDate is string && c.deliveryDate.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$') && c.deliveryDate>=c.date && c.paymentDays in [0,5,15,30,45,60,90,180] && c.deliveryAddress is string && c.deliveryAddress.size()<=300 && c.reference is string && c.reference.size()<=200 && c.comments is string && c.comments.size()<=2000 && c.status=='DRAFT';
+      }
+      match /purchaseOrderApprovals/{id} {
+        allow read: if quoteReader();
+        allow write: if false;
+      }
+      match /purchaseOrderVersions/{id} {
+        function shape(d){return d.keys().hasOnly(['supplierId','supplierName','conditions','revisionId','lineCount','totals','version','auditId','updatedBy','updatedAt']) && purchaseLink('suppliers',d.supplierId) && d.supplierName is string && d.supplierName.size()<=200 && orderCondition(d.conditions) && d.revisionId is string && d.lineCount is int && d.lineCount>0 && quoteSums(d.totals);}
+        function original(d){let path=/databases/$(database)/documents/organizations/$(companyId)/purchaseRecords/$(id);return id.matches('^new_[a-f0-9-]{36}$') && (!exists(path) || (get(path).data.group=='purchaseOrders' && get(path).data.values.status=='DRAFT' && get(path).data.values.supplierId==d.supplierId && get(path).data.values.date==d.conditions.date));}
+        allow read: if quoteReader();
+        allow create: if quoteEditor() && shape(request.resource.data) && original(request.resource.data) && orderRevisionPublished(request.resource.data,id) && auditWrite(companyId,'purchaseOrderVersions',id,null);
+        allow update: if quoteEditor() && !exists(/databases/$(database)/documents/organizations/$(companyId)/purchaseOrderApprovals/$(id)) && shape(request.resource.data) && request.resource.data.supplierId==resource.data.supplierId && request.resource.data.conditions.date==resource.data.conditions.date && orderRevisionPublished(request.resource.data,id) && auditWrite(companyId,'purchaseOrderVersions',id,resource.data);
+        allow delete: if false;
+      }
+      match /legacyData/{table}/records/{id} {
+        allow read: if companyId == '500123568' &&
+          table in ['accounts','contacts','offices','cities','states','quotations'] &&
+          orgAccess(companyId,['admin','viewer']);
+        allow write: if false;
+      }
+
       allow read: if platformAdmin() || orgRole(resource.data) in ['admin','billing','viewer'];
       allow create: if platformAdmin() && request.resource.data.keys().hasOnly(['name','nit','members','createdAt','updatedAt','version','auditId','updatedBy']) &&
         shortText(request.resource.data.name,200) && companyId.matches('^[0-9]{5,15}$') && request.resource.data.nit == companyId &&
@@ -170,9 +499,9 @@ service cloud.firestore {
           let e=request.resource.data;
           let path=targetPath(e);
           return registered() && e.keys().hasOnly(['target','targetId','actorUid','actorEmail','at','before','after']) &&
-          e.target in ['company','drafts','profiles','customers','customerContacts','customerSites','products'] &&
+          e.target in ['purchaseOrderVersions','purchaseRecords','purchaseEdits','commercialQuotationVersions','commercialQuotationEdits','commercialQuotations','commercialContacts','commercialOffices','commercialAccounts','company','drafts','profiles','customers','customerContacts','customerSites','products'] &&
           e.actorUid == request.auth.uid && e.actorEmail == request.auth.token.email && e.at == request.time &&
-          e.after == getAfter(path).data &&
+          e.after == getAfter(path).data && (e.target != 'commercialQuotationVersions' || quoteRevisionAudit(e.after)) && (e.target != 'commercialQuotations' || quotationAuditDetails(e.after)) && (e.target != 'commercialQuotationEdits' || !('pricing' in e.after) || quotationAuditDetails(e.after.pricing)) &&
           e.after.auditId == eventId && e.after.updatedAt == request.time &&
           e.before == (exists(path) ? get(path).data : null) &&
           // Lines 2/3 and v2 context/payment are checked in the exact atomic audit event.

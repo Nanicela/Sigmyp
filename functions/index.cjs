@@ -67,3 +67,6 @@ exports.createDraft = callable(async request => {
     return { id: draftRef.id, reused: false };
   });
 });
+
+// Approval is a privileged server operation. Client writes stay denied.
+exports.approvePurchaseOrder = callable(request => require('./purchase-approval.cjs').approvePurchaseOrder(db, request));

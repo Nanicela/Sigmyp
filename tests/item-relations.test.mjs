@@ -1,0 +1,5 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {itemRelations} from '../vue/src/domain/item-relations.js';
+test('relaciona solo el ítem seleccionado, suma líneas repetidas y no convierte pendientes en saldos',()=>{
+ const data={purchaseOrders:[{id:'one',lines:[{productId:'a',quantityUnits:1500,totalCents:11900},{productId:'a',quantityUnits:2500,totalCents:23800},{productId:'b',quantityUnits:10000,totalCents:999999}]},{id:'two',lines:[{productId:'b',quantityUnits:2000,totalCents:100}]},{id:'header-only'}],kardex:[{id:'pending-a',itemId:'a',status:'PENDING',quantity:10},{id:'pending-b',itemId:'b',status:'PENDING',quantity:20},{id:'applied-a',itemId:'a',status:'APPLIED',quantity:50}]};
+ const r=itemRelations('a',data);assert.equal(r.orders.length,1);assert.equal(r.orders[0].quantity,4);assert.equal(r.orders[0].totalCents,35700);assert.deepEqual(r.movements.map(m=>m.id),['pending-a']);assert.equal(r.balance,undefined);assert.deepEqual(itemRelations('',data),{orders:[],movements:[]});assert.deepEqual(itemRelations('missing',data),{orders:[],movements:[]});assert.equal(data.purchaseOrders[0].lines.length,3);
+});

@@ -103,8 +103,12 @@ test('Vue compila las dos entradas y todas las vistas de procesos sin perder con
   for (const module of moduleCatalog.moduleCatalog)
     for (const processId of module.processIds)
       assert.ok(processCatalog.processById(processId), `${module.id} debe apuntar a un proceso existente`);
-  assert.match(processWorkspace, /target="_top"/);
-  assert.match(processWorkspace, /modulesForProcess/);
+  assert.match(processWorkspace, /workspaceTabsForProcess/);
+  assert.deepEqual(moduleCatalog.workspaceTabsForProcess('comercial').map(tab => tab.label),
+    ['Cuentas', 'Contactos', 'Oficinas', 'Cotizaciones']);
+  assert.equal(moduleCatalog.workspaceTabsForProcess('comercial')[3].pending, true);
+  assert.match(processWorkspace, /activeData\.contacts/);
+  assert.match(processWorkspace, /activeData\.sites/);
   assert.match(processWorkspace, /process-module-tabs/);
   assert.match(processWorkspace, /role="tabpanel"/);
   assert.match(processWorkspace, /activeData\.customers/);

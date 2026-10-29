@@ -17,7 +17,7 @@ cd "$project_dir"
 case "${1:-cloud}" in
   roles) FIREBASE_WEB_CONFIG=web/firebase-config.roles.json npm run build && ./node_modules/.bin/firebase emulators:start --project demo-facturacion --only auth,firestore,hosting ;;
   start) npm run emulators ;;
-  cloud) BUILD_DIR=dist-cloud FIREBASE_WEB_CONFIG=web/firebase-config.json npm run build && python3 -m http.server 5504 --bind 127.0.0.1 --directory dist-cloud ;;
+  cloud) BUILD_DIR=dist-cloud FIREBASE_WEB_CONFIG=web/firebase-config.json npm run build && python3 scripts/serve-local.py ;;
   login) shift; ./node_modules/.bin/firebase login "$@" ;;
   publish) BUILD_DIR=dist-release FIREBASE_WEB_CONFIG=web/firebase-config.json npm run build && ./node_modules/.bin/firebase deploy --config firebase.release.json --only hosting --project facturacion-electronica-a73e3 ;;
   seed) npm run seed:emulator ;;

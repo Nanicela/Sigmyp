@@ -1,0 +1,9 @@
+      match /purchaseImports/{group} {
+        allow read: if group == 'manifest' && companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow write: if false;
+        match /records/{recordId} {
+          allow read: if group in ['suppliers','supplierContacts','purchaseOrders','items','kardex'] && companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+          allow write: if false;
+        }
+      }
+

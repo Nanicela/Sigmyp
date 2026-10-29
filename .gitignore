@@ -18,3 +18,12 @@ credenciales*.txt
 dist-release/
 
 dist-cloud/
+
+.local/
+
+# Cachés Python y copias de datos locales
+__pycache__/
+*.py[cod]
+*.sqlite
+*.sqlite3
+*.db

@@ -1,0 +1,17 @@
+      function compositionPublished(d,id){let path=/databases/$(database)/documents/organizations/$(companyId)/productCompositions/$(d.compositionRevision);let r=get(path).data;return d.compositionCount is int && d.compositionCount>=0 && r.productId==id && r.ownerUid==request.auth.uid && !r.sealed && getAfter(path).data.sealed && (d.compositionCount==0 || getAfter(/databases/$(database)/documents/organizations/$(companyId)/productCompositions/$(d.compositionRevision)/lines/$(string(d.compositionCount-1))).data.index==d.compositionCount-1);}
+      function compositionChange(d,id){return !('compositionRevision' in d) ? !('compositionCount' in d) : compositionPublished(d,id);}
+      match /productCompositions/{revisionId} {
+        allow read: if quoteReader();
+        allow create: if quoteEditor() && request.resource.data.keys().hasOnly(['productId','ownerUid','sealed','createdAt']) && shortText(request.resource.data.productId,100) && request.resource.data.ownerUid==request.auth.uid && request.resource.data.sealed==false && request.resource.data.createdAt==request.time;
+        allow update: if quoteEditor() && resource.data.ownerUid==request.auth.uid && !resource.data.sealed && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sealed']) && request.resource.data.sealed==true && getAfter(/databases/$(database)/documents/organizations/$(companyId)/productionProducts/$(resource.data.productId)).data.compositionRevision==revisionId;
+        allow delete: if false;
+        match /lines/{index} {
+          function rev(){return get(/databases/$(database)/documents/organizations/$(companyId)/productCompositions/$(revisionId)).data;}
+          function item(l){return l.keys().hasOnly(['kind','itemId','code','name','quantity','averageUnitCost']) && purchaseLink('items',l.itemId) && prodText(l.code,100) && shortText(l.name,200) && l.quantity is number && l.quantity>0 && l.quantity<=1000000000 && (l.averageUnitCost==null || (l.averageUnitCost is number && l.averageUnitCost>=0 && l.averageUnitCost<=1000000000000));}
+          function process(l){return l.keys().hasOnly(['kind','name','type','unitCost','time','userName','equipment','supplierId','comments']) && shortText(l.name,200) && l.type in ['INTERNAL','EXTERNAL'] && l.unitCost is number && l.unitCost>=0 && l.unitCost<=1000000000000 && l.time is number && l.time>=0 && l.time<=1000000 && prodText(l.userName,200) && prodText(l.equipment,200) && prodText(l.comments,2000) && (l.type=='INTERNAL'?l.supplierId=='':purchaseLink('suppliers',l.supplierId));}
+          function shape(d){return d.keys().hasOnly(['index','line']) && d.index is int && d.index>=0 && string(d.index)==index && (d.line.kind=='item'?item(d.line):d.line.kind=='process' && process(d.line)) && (d.index==0 || getAfter(/databases/$(database)/documents/organizations/$(companyId)/productCompositions/$(revisionId)/lines/$(string(d.index-1))).data.index==d.index-1);}
+          allow read: if quoteReader();
+          allow create: if quoteEditor() && rev().ownerUid==request.auth.uid && !rev().sealed && shape(request.resource.data);
+          allow update,delete: if false;
+        }
+      }

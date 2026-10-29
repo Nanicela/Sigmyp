@@ -25,3 +25,23 @@ export const modulesForProcess = (processId, { includePlanned = false } = {}) =>
   .filter(module => module.processIds.includes(processId))
   .filter(module => includePlanned || [MODULE_STATUS.ACTIVE, MODULE_STATUS.MIGRATING].includes(module.status))
   .sort((left, right) => left.order - right.order);
+
+// Las vistas comerciales comparten el directorio de la compañía activa.
+export const workspaceTabsForProcess = processId => processId === 'comercial'
+  ? [
+    { id: 'accounts', label: 'Cuentas', dataModule: 'crm', route: 'clientes' },
+    { id: 'contacts', label: 'Contactos', dataModule: 'crm', route: 'clientes' },
+    { id: 'offices', label: 'Oficinas', dataModule: 'crm', route: 'clientes' },
+    { id: 'quotations', label: 'Cotizaciones', dataModule: 'sales', pending: true }
+  ]
+  : processId === 'compras'
+  ? [
+    { id: 'suppliers', label: 'Proveedores', dataModule: 'purchases', columns: ['NIT', 'Nombre', 'Teléfono', 'Email', 'Ciudad', 'Estado', 'Acciones'] },
+    { id: 'supplierContacts', label: 'Contactos', dataModule: 'purchases', columns: ['Nombre', 'Proveedor', 'Cargo', 'Teléfono', 'Email', 'Acciones'] },
+    { id: 'purchaseOrders', label: 'Órdenes de compra', dataModule: 'purchases', columns: ['Número', 'Proveedor', 'Estado', 'Creación', 'Fecha esperada', 'Usuario que aprueba', 'Total', 'Comentarios', 'Acciones'] },
+    { id: 'items', label: 'Ítems', dataModule: 'purchases', columns: ['Código', 'Nombre', 'Unidad', 'Estado', 'Acciones'] },
+    { id: 'kardex', label: 'Kárdex', dataModule: 'purchases', columns: ['Fecha', 'Ítem', 'Movimiento', 'Entrada', 'Salida', 'Saldo', 'Documento', 'Acciones'] }
+  ]
+  : processId === 'produccion'
+  ? [{id:'products',label:'Productos',dataModule:'production'},{id:'productionOrders',label:'Órdenes de producción',dataModule:'production'},{id:'referrals',label:'Remisiones',dataModule:'production'},{id:'processes',label:'Procesos',dataModule:'production'}]
+  : modulesForProcess(processId).map(module => ({ ...module, dataModule: module.id }));

@@ -19,16 +19,17 @@ function readable(key,value){
  if(value===undefined||value===null)return 'Sin valor anterior';
  if(key.endsWith('Cents'))return (value/100).toLocaleString('es-CO',{style:'currency',currency:'COP'});
  if(key==='buyer')return `${value.name} · ${value.identification}`;
+ if(key==='lines'&&value[0]?.description!==undefined)return value.map(l=>`${l.description} · ${l.quantityUnits/1000} × ${readable('unitPriceCents',l.unitPriceCents)} · IVA ${l.rate}%`).join('\n');
  if(key==='lines')return value.map(l=>`${l.description} · ${l.quantityUnits/10000} × ${readable('priceCents',l.priceCents)} · IVA ${l.rate}%`).join('\n');
  if(key==='members')return Object.entries(value).map(([email,role])=>`${email}: ${{admin:'Administrador',billing:'Facturador',viewer:'Consulta',platform:'Superadministrador · acceso global'}[role]||role}`).join('\n')||'Sin accesos asignados';
- if(key==='context'||key==='payment')return JSON.stringify(value,null,2);
+ if(['context','payment','conditions','totals','links','snapshot','values'].includes(key))return JSON.stringify(value,null,2);
  if(typeof value==='boolean')return value?'Sí':'No';
  return ({INVOICE:'Factura',CREDIT_NOTE:'Nota crédito',DEBIT_NOTE:'Nota débito',DRAFT:'Borrador'})[value]||String(value);
 }
 export function setupAudit({db,getCompany,message}) {
   const dialog=document.querySelector('#audit-dialog'), list=document.querySelector('#audit-events'), more=document.querySelector('#audit-more');
   let cursor=null,company='',epoch=0,rows=[];
-  const labels={company:'Empresa y permisos',drafts:'Borrador',profiles:'Datos tributarios',customers:'Cliente',customerContacts:'Contacto de cliente',customerSites:'Sede de cliente',products:'Producto o servicio'};
+  const labels={productionProducts:'Producto de producción',productionOrders:'Orden de producción',purchaseOrderApprovals:'Aprobación de orden de compra',purchaseOrderVersions:'Orden de compra',purchaseRecords:'Nuevo registro de Compras',purchaseEdits:'Registro de Compras',company:'Empresa y permisos',drafts:'Borrador',profiles:'Datos tributarios',customers:'Cliente',customerContacts:'Contacto de cliente',customerSites:'Sede de cliente',products:'Producto o servicio',commercialAccounts:'Cuenta comercial',commercialContacts:'Contacto comercial',commercialOffices:'Oficina comercial',commercialQuotations:'Cotización',commercialQuotationEdits:'Cotización importada',commercialQuotationVersions:'Cotización'};
   async function page() {
     const current=epoch;more.disabled=true;
     try {

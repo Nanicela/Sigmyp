@@ -1,0 +1,48 @@
+      match /commercialContacts/{id} {
+        function validRecord(d) { return d.keys().hasOnly(['name', 'jobTitle', 'phone1', 'phone2', 'mobile', 'email', 'comments', 'sourceId', 'sourceDocumentId', 'createdAt', 'version', 'auditId', 'updatedBy', 'updatedAt','customerId','accountDocumentId']) &&
+          d.sourceDocumentId == id && ((d.sourceId == null && nativeKey(id) && commercialAccountLink(d.accountDocumentId,d.customerId)) || (id.matches('^[a-f0-9]{64}$') && d.sourceId is int && get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/contacts/records/$(id)).data.data.id == d.sourceId && !d.keys().hasAny(['customerId', 'accountDocumentId']))) &&
+          shortText(d.name,200) &&
+          d.name is string && d.name.size() <= 200 &&
+          d.jobTitle is string && d.jobTitle.size() <= 200 &&
+          d.phone1 is string && d.phone1.size() <= 40 &&
+          d.phone1.matches('^[0-9]*$') &&
+          d.phone2 is string && d.phone2.size() <= 40 &&
+          d.phone2.matches('^[0-9]*$') &&
+          d.mobile is string && d.mobile.size() <= 40 &&
+          d.mobile.matches('^[0-9]*$') &&
+          d.email is string && d.email.size() <= 254 &&
+          (d.email == '' || d.email.matches('^[^ @]+@[^ @]+[.][^ @]+$')) &&
+          d.comments is string && d.comments.size() <= 4000 &&
+          d.createdAt is timestamp; }
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow create: if companyId == '500123568' && orgAccess(companyId,['admin']) && validRecord(request.resource.data) && request.resource.data.createdAt == request.time && auditWrite(companyId,'commercialContacts',id,null);
+        allow update: if companyId == '500123568' && orgAccess(companyId,['admin']) && validRecord(request.resource.data) && request.resource.data.sourceId == resource.data.sourceId && request.resource.data.createdAt == resource.data.createdAt  && (resource.data.sourceId != null || (request.resource.data.customerId == resource.data.customerId && request.resource.data.accountDocumentId == resource.data.accountDocumentId)) && auditWrite(companyId,'commercialContacts',id,resource.data);
+        allow delete: if false;
+      }
+      match /commercialOffices/{id} {
+        function validRecord(d) { return d.keys().hasOnly(['name', 'type', 'address', 'municipality', 'department', 'phone1', 'phone2', 'email', 'technicianName', 'technicianPhone', 'technicianEmail', 'comments', 'sourceId', 'sourceDocumentId', 'createdAt', 'version', 'auditId', 'updatedBy', 'updatedAt','customerId','accountDocumentId','contactId','contactDocumentId']) &&
+          d.sourceDocumentId == id && ((d.sourceId == null && nativeKey(id) && commercialAccountLink(d.accountDocumentId,d.customerId) && commercialContactLink(d.contactDocumentId,d.contactId,d.customerId)) || (id.matches('^[a-f0-9]{64}$') && d.sourceId is int && get(/databases/$(database)/documents/organizations/$(companyId)/legacyData/offices/records/$(id)).data.data.id == d.sourceId && !d.keys().hasAny(['customerId', 'accountDocumentId', 'contactId', 'contactDocumentId']))) &&
+          shortText(d.name,200) &&
+          d.name is string && d.name.size() <= 200 &&
+          d.type is string && d.type.size() <= 120 &&
+          d.address is string && d.address.size() <= 300 &&
+          d.municipality is string && d.municipality.size() <= 120 &&
+          d.department is string && d.department.size() <= 120 &&
+          d.phone1 is string && d.phone1.size() <= 40 &&
+          d.phone1.matches('^[0-9]*$') &&
+          d.phone2 is string && d.phone2.size() <= 40 &&
+          d.phone2.matches('^[0-9]*$') &&
+          d.email is string && d.email.size() <= 254 &&
+          (d.email == '' || d.email.matches('^[^ @]+@[^ @]+[.][^ @]+$')) &&
+          d.technicianName is string && d.technicianName.size() <= 200 &&
+          d.technicianPhone is string && d.technicianPhone.size() <= 40 &&
+          d.technicianPhone.matches('^[0-9]*$') &&
+          d.technicianEmail is string && d.technicianEmail.size() <= 254 &&
+          (d.technicianEmail == '' || d.technicianEmail.matches('^[^ @]+@[^ @]+[.][^ @]+$')) &&
+          d.comments is string && d.comments.size() <= 4000 &&
+          d.createdAt is timestamp; }
+        allow read: if companyId == '500123568' && orgAccess(companyId,['admin','viewer']);
+        allow create: if companyId == '500123568' && orgAccess(companyId,['admin']) && validRecord(request.resource.data) && request.resource.data.createdAt == request.time && auditWrite(companyId,'commercialOffices',id,null);
+        allow update: if companyId == '500123568' && orgAccess(companyId,['admin']) && validRecord(request.resource.data) && request.resource.data.sourceId == resource.data.sourceId && request.resource.data.createdAt == resource.data.createdAt  && (resource.data.sourceId != null || (request.resource.data.customerId == resource.data.customerId && request.resource.data.accountDocumentId == resource.data.accountDocumentId && request.resource.data.contactId == resource.data.contactId && request.resource.data.contactDocumentId == resource.data.contactDocumentId)) && auditWrite(companyId,'commercialOffices',id,resource.data);
+        allow delete: if false;
+      }

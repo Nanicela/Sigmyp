@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {duplicateQuotationForm} from '../web/quotation-actions.js';
+import {buildQuotationPdf} from '../web/quotation-pdf.js';
+const line={description:'Servicio técnico',code:'SER-01',quantityUnits:1000,unitPriceCents:10000,discountBps:0,rate:19,totalCents:11900};
+const quote={number:'COT-2026-PRUEBA',id:'original',date:'2026-10-20',status:'APPROVED',purchaseOrder:'OP-1',approverContactId:'old',customerId:'a',contactId:'c',snapshot:{accountName:'Empresa de prueba',contactName:'Contacto de prueba'},warranty:'Un año',paymentMethod:'Pago a 30 días',letter:'Propuesta comercial de prueba.',pricing:{lines:Array.from({length:120},(_,i)=>({...line,description:`Servicio técnico ${i+1}`})),discountCents:0,subtotalCents:1200000,taxCents:228000,totalCents:1428000}};
+test('duplicar conserva 120 líneas independientes y reinicia identidad, aprobación y fecha',()=>{const copy=duplicateQuotationForm(quote,'2026-10-21');assert.equal(copy.lines.length,120);assert.equal(copy.status,'CREATED');assert.equal(copy.date,'2026-10-21');assert.equal(copy.purchaseOrder,'');assert.equal(copy.approverContactId,'');assert.equal(copy.number,undefined);assert.equal(copy.id,undefined);assert.equal(copy.customerId,'a');copy.lines[0].description='Cambio';assert.equal(quote.pricing.lines[0].description,'Servicio técnico 1');});
+test('copia importada no inventa precio histórico',()=>{const copy=duplicateQuotationForm({productDetails:[{name:'Equipo',catalogPrice:999,quantity:1}]});assert.equal(copy.lines[0].price,'');});
+test('PDF pagina 120 productos sin truncarlos y conserva total',()=>{const pdf=buildQuotationPdf(quote);assert.ok(pdf.getNumberOfPages()>2);const content=pdf.output();assert.ok(content.includes('120'));assert.ok(content.includes('12.000'));assert.ok(content.includes('14.280'));});
